@@ -1,5 +1,9 @@
 import Foundation
+#if canImport(Darwin)
 import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 
 /// Builds the data and pre-filled GitHub issue URL behind the "Report this
 /// cable" feature. Pure data assembly. The app and the CLI both render this
@@ -92,12 +96,26 @@ public enum CableReport {
         }
 
         private static func fetchMacModel() -> String {
+            #if canImport(Darwin)
             var size = 0
             sysctlbyname("hw.model", nil, &size, nil, 0)
             guard size > 0 else { return "unknown" }
             var buf = [CChar](repeating: 0, count: size)
             sysctlbyname("hw.model", &buf, &size, nil, 0)
             return String(cString: buf)
+            #else
+            // Linux has no `hw.model`; report the DMI product name when the
+            // kernel exposes it, otherwise fall back to a generic label.
+            for path in ["/sys/class/dmi/id/product_name",
+                         "/sys/firmware/devicetree/base/model"] {
+                if let raw = try? String(contentsOfFile: path, encoding: .utf8) {
+                    let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+                        .replacingOccurrences(of: "\u{0}", with: "")
+                    if !name.isEmpty { return name }
+                }
+            }
+            return "Linux"
+            #endif
         }
 
         private static func fetchOSVersion() -> String {

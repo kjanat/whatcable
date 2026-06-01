@@ -1,0 +1,14 @@
+// System-library shim that exposes the platform's libsqlite3 to Swift on
+// platforms where there is no built-in `SQLite3` module (notably Linux).
+// On Apple platforms the SDK already provides `SQLite3`, so this target is
+// only wired into the package on Linux (see Package.swift).
+//
+// Requires the SQLite development headers at build time:
+//   Debian/Ubuntu:  apt-get install libsqlite3-dev
+//   Fedora:         dnf install sqlite-devel
+//   Alpine:         apk add sqlite-dev
+module CSQLite [system] {
+    header "shim.h"
+    link "sqlite3"
+    export *
+}

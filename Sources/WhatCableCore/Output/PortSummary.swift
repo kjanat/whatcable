@@ -1,7 +1,19 @@
 import Foundation
+#if canImport(os)
 import os.log
 
 private let _portSummaryLog = Logger(subsystem: "uk.whatcable.whatcable", category: "port-summary")
+#else
+/// No-op stand-in for `os.Logger` on platforms without the `os` module
+/// (e.g. Linux). Keeps the `_portSummaryLog.warning(...)` call sites
+/// compiling without pulling in Apple's unified logging framework.
+private struct _NoopLogger {
+    func warning(_ message: @autoclosure () -> String) {}
+    func debug(_ message: @autoclosure () -> String) {}
+    func error(_ message: @autoclosure () -> String) {}
+}
+private let _portSummaryLog = _NoopLogger()
+#endif
 
 /// Plain-English interpretation of a AppleHPMInterface's raw IOKit data.
 public struct PortSummary {

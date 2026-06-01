@@ -48,3 +48,6 @@ AGENTS.md
 
 # Internal architectural decision log
 DECISIONS.md
+
+# swiftly local toolchain pin (do not pin contributors to one version)
+.swift-version

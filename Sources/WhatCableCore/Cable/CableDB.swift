@@ -1,5 +1,9 @@
 import Foundation
-import SQLite3
+#if canImport(SQLite3)
+import SQLite3            // Apple platforms ship the SQLite3 module
+#elseif canImport(CSQLite)
+import CSQLite            // Linux: system-library shim (see Sources/CSQLite)
+#endif
 
 /// Read-only SQLite-backed lookup for vendors and known cables.
 ///

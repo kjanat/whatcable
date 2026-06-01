@@ -1,13 +1,23 @@
 import Foundation
+import Dispatch
 import WhatCableCore
+#if os(macOS)
 import WhatCableDarwinBackend
 import WhatCableAppKit
 import WhatCablePlugins
+#else
+import WhatCableLinuxBackend
+#if canImport(Glibc)
+import Glibc   // signal / SIG_IGN / fflush / stdout
+#endif
+#endif
 
 @main
 struct WhatCableCLI {
     static func main() async {
+        #if os(macOS)
         bootstrapPlugins(registry: .shared)
+        #endif
 
         let args = Array(CommandLine.arguments.dropFirst())
 
@@ -20,6 +30,7 @@ struct WhatCableCLI {
             return
         }
 
+        #if os(macOS)
         if args.contains("--tb-debug") {
             print(ThunderboltProbe.dump(), terminator: "")
             return
@@ -35,20 +46,25 @@ struct WhatCableCLI {
             launchApp(menuBarMode: wantsPopover)
             return
         }
+        #endif
 
         // Validate unknown flags BEFORE dispatching plugin commands. Otherwise
         // a typo alongside a plugin flag (e.g. `whatcable --pro --bogus`) would
         // silently run the plugin instead of complaining about the typo.
-        var knownFlags: Set<String> = ["--raw", "--json", "--watch", "--report", "--tb-debug", "--desktop", "--popover", "-h", "--help", "--version"]
+        var knownFlags: Set<String> = ["--raw", "--json", "--watch", "--report", "-h", "--help", "--version"]
+        #if os(macOS)
+        knownFlags.formUnion(["--tb-debug", "--desktop", "--popover"])
         for cmd in PluginRegistry.shared.cliCommands {
             knownFlags.formUnion(cmd.flagNames)
         }
+        #endif
         for arg in args where arg.hasPrefix("-") && !knownFlags.contains(arg) {
             FileHandle.standardError.write(Data("whatcable: unknown option \(arg)\n".utf8))
             FileHandle.standardError.write(Data(helpText.utf8))
             exit(2)
         }
 
+        #if os(macOS)
         // Plugin commands are program-modes, not flags that combine. If the
         // user typed two at once (e.g. `--activate KEY --silence-pro-hints`)
         // their intent is ambiguous, so refuse rather than silently picking
@@ -63,6 +79,7 @@ struct WhatCableCLI {
             await cmd.run(args)
             return
         }
+        #endif
 
         let showRaw = args.contains("--raw")
         let asJSON = args.contains("--json")
@@ -89,6 +106,7 @@ struct WhatCableCLI {
             // Plain text one-shot output gets a footer hint from any plugin
             // that wants one (e.g. the unlicensed-Pro hint). Suppressed for
             // --json (machine-readable) and not reached for --watch / --report.
+            #if os(macOS)
             if !asJSON {
                 for contributor in PluginRegistry.shared.cliOutputFooterContributors {
                     if let line = contributor() {
@@ -97,6 +115,7 @@ struct WhatCableCLI {
                     }
                 }
             }
+            #endif
         } catch {
             FileHandle.standardError.write(Data("whatcable: \(error)\n".utf8))
             exit(1)
@@ -112,19 +131,34 @@ struct WhatCableCLI {
         Options:
           --watch        Continuously monitor for changes (Ctrl+C to exit)
           --json         Output as JSON instead of human-readable text
-          --raw          Include raw IOKit properties for each port
+          --raw          Include raw port/cable properties for each port
           --report       Print a cable report (markdown + GitHub URL) and exit
+
+        """
+        #if os(macOS)
+        text += """
           --desktop      Open WhatCable as a Dock app with a window
           --popover      Open WhatCable in the menu bar (popover mode)
           --tb-debug     Dump the IOIOThunderboltSwitch tree (for contributors helping
                          us design the Thunderbolt fabric feature). See issue tracker.
+
+        """
+        #else
+        text += """
+          (GUI: run `whatcable-gui` to open the live browser dashboard on Linux)
+
+        """
+        #endif
+        text += """
           --version      Print version and exit
           -h, --help     Show this help and exit
 
         """
+        #if os(macOS)
         for cmd in PluginRegistry.shared.cliCommands {
             text += cmd.helpLines + "\n"
         }
+        #endif
         return text
     }
 }
@@ -269,6 +303,7 @@ private func timestampHeader() -> String {
     return "whatcable --watch · \(formatter.string(from: Date()))\n\n"
 }
 
+#if os(macOS)
 private func launchApp(menuBarMode: Bool) {
     let suiteName = "uk.whatcable.whatcable"
     if let defaults = UserDefaults(suiteName: suiteName) {
@@ -304,6 +339,7 @@ private func launchApp(menuBarMode: Bool) {
         exit(1)
     }
 }
+#endif
 
 private func printCableReports(identities: [USBPDSOP], cioCapabilities: [CIOCableCapability]) {
     let cables = identities.filter {
