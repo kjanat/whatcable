@@ -43,7 +43,8 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         let cb: IOServiceMatchingCallback = { refcon, iterator in
             guard let refcon else { return }
-            let watcher = Unmanaged<IOIOThunderboltSwitchWatcher>.fromOpaque(refcon).takeUnretainedValue()
+            let watcher = Unmanaged<IOIOThunderboltSwitchWatcher>.fromOpaque(refcon)
+                .takeUnretainedValue()
             Task { @MainActor in
                 // Drain the iterator so the kernel re-arms the notification,
                 // then do a full re-walk so we pick up parent linkage and
@@ -138,7 +139,8 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
         for matchClassName in Self.matchClasses {
             let matching = IOServiceMatching(matchClassName)
             var iter: io_iterator_t = 0
-            guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter) == KERN_SUCCESS else {
+            guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter) == KERN_SUCCESS
+            else {
                 continue
             }
             defer { IOObjectRelease(iter) }
@@ -166,7 +168,8 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
                 // from inside IOCFUnserializeBinary when the kernel returns
                 // a malformed serialised properties blob (issue #181).
                 func readProp(_ key: String) -> Any? {
-                    IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+                    IORegistryEntryCreateCFProperty(
+                        service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
                 }
                 let uid = (readProp("UID") as? NSNumber)?.int64Value
 
@@ -176,13 +179,14 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
                 // plane, so this gives us the parent linkage for free.
                 let parentEntryID = parentSwitchEntryID(of: service)
 
-                raw.append(RawEntry(
-                    service: service,
-                    className: className,
-                    uid: uid,
-                    entryID: entryID,
-                    parentEntryID: parentEntryID
-                ))
+                raw.append(
+                    RawEntry(
+                        service: service,
+                        className: className,
+                        uid: uid,
+                        entryID: entryID,
+                        parentEntryID: parentEntryID
+                    ))
             }
         }
 
@@ -210,14 +214,16 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
             guard let uid = entry.uid else { continue }
 
             let ports = parsePorts(of: entry.service)
-            let parentUID: Int64? = entry.parentEntryID != 0
+            let parentUID: Int64? =
+                entry.parentEntryID != 0
                 ? uidByEntryID[entry.parentEntryID]
                 : nil
 
             // The service is still alive here (released by the defer above
             // after this loop finishes), so per-key reads are safe.
             func read(_ key: String) -> Any? {
-                IORegistryEntryCreateCFProperty(entry.service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+                IORegistryEntryCreateCFProperty(
+                    entry.service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
             }
             // Pass the UID read in the first pass so from() does not make a
             // second IOKit round-trip for the same key.
@@ -249,7 +255,10 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
     private func parsePorts(of switchService: io_service_t) -> [IOThunderboltPort] {
         var ports: [IOThunderboltPort] = []
         var childIter: io_iterator_t = 0
-        guard IORegistryEntryGetChildIterator(switchService, kIOServicePlane, &childIter) == KERN_SUCCESS else {
+        guard
+            IORegistryEntryGetChildIterator(switchService, kIOServicePlane, &childIter)
+                == KERN_SUCCESS
+        else {
             return ports
         }
         defer { IOObjectRelease(childIter) }
@@ -266,7 +275,8 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
             guard className.contains("Port") else { continue }
 
             func read(_ key: String) -> Any? {
-                IORegistryEntryCreateCFProperty(child, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+                IORegistryEntryCreateCFProperty(child, key as CFString, kCFAllocatorDefault, 0)?
+                    .takeRetainedValue()
             }
             if let port = IOThunderboltPort.from(read: read) {
                 ports.append(port)
@@ -293,7 +303,8 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
 
         for _ in 0..<32 {
             var parent: io_service_t = 0
-            guard IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS else {
+            guard IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS
+            else {
                 return 0
             }
             // Move ownership into `current` for the next iteration / cleanup.
@@ -307,7 +318,8 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
                 // / older Macs) or `IOThunderboltSwitch*` (M5 / macOS 26).
                 // Covers Type3 / Type5 / Type7 / IntelJHL8440 / IntelJHL9580
                 // / future variants in both naming families.
-                if name.hasPrefix("IOIOThunderboltSwitch") || name.hasPrefix("IOThunderboltSwitch") {
+                if name.hasPrefix("IOIOThunderboltSwitch") || name.hasPrefix("IOThunderboltSwitch")
+                {
                     var entryID: UInt64 = 0
                     if IORegistryEntryGetRegistryEntryID(current, &entryID) == KERN_SUCCESS {
                         return entryID
@@ -328,7 +340,8 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         let cb: IOServiceInterestCallback = { refcon, _, _, _ in
             guard let refcon else { return }
-            let watcher = Unmanaged<IOIOThunderboltSwitchWatcher>.fromOpaque(refcon).takeUnretainedValue()
+            let watcher = Unmanaged<IOIOThunderboltSwitchWatcher>.fromOpaque(refcon)
+                .takeUnretainedValue()
             Task { @MainActor in watcher.refresh() }
         }
         var notification: io_object_t = 0

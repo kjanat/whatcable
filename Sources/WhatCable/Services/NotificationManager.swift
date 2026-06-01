@@ -1,9 +1,9 @@
-import Foundation
 import Combine
+import Foundation
 import UserNotifications
-import os.log
 import WhatCableCore
 import WhatCableDarwinBackend
+import os.log
 
 /// Posts user notifications when USB-C cables / power sources connect or
 /// disconnect, gated by the user's `AppSettings.notifyOnChanges` preference.
@@ -11,7 +11,8 @@ import WhatCableDarwinBackend
 final class NotificationManager {
     static let shared = NotificationManager()
 
-    private nonisolated static let log = Logger(subsystem: "uk.whatcable.whatcable", category: "notifications")
+    private nonisolated static let log = Logger(
+        subsystem: "uk.whatcable.whatcable", category: "notifications")
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -56,9 +57,12 @@ final class NotificationManager {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             switch settings.authorizationStatus {
             case .notDetermined:
-                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) {
+                    granted, error in
                     if let error {
-                        Self.log.error("Notification auth failed: \(error.localizedDescription, privacy: .public)")
+                        Self.log.error(
+                            "Notification auth failed: \(error.localizedDescription, privacy: .public)"
+                        )
                     } else {
                         Self.log.info("Notification auth granted: \(granted)")
                     }
@@ -79,7 +83,8 @@ final class NotificationManager {
         guard AppSettings.shared.notifyOnChanges else { return }
 
         for device in added {
-            let name = device.productName ?? String(localized: "USB device", bundle: _appLocalizedBundle)
+            let name =
+                device.productName ?? String(localized: "USB device", bundle: _appLocalizedBundle)
             postNotification(
                 title: String(localized: "Connected: \(name)", bundle: _appLocalizedBundle),
                 body: "\(device.speedLabel)\(device.vendorName.map { " · \($0)" } ?? "")"
@@ -88,7 +93,8 @@ final class NotificationManager {
         if removedCount > 0 {
             postNotification(
                 title: String(localized: "USB device disconnected", bundle: _appLocalizedBundle),
-                body: String(localized: "\(removedCount) devices removed", bundle: _appLocalizedBundle)
+                body: String(
+                    localized: "\(removedCount) devices removed", bundle: _appLocalizedBundle)
             )
         }
     }
@@ -121,13 +127,21 @@ final class NotificationManager {
 
         for portKey in addedPortKeys {
             let portSources = current.filter { $0.portKey == portKey }
-            let preferred = PowerSource.preferredChargingSource(in: portSources) ?? portSources.first
-            let body = preferred?.winning.map { String(localized: "\($0.wattsLabel) negotiated", bundle: _appLocalizedBundle) }
+            let preferred =
+                PowerSource.preferredChargingSource(in: portSources) ?? portSources.first
+            let body =
+                preferred?.winning.map {
+                    String(localized: "\($0.wattsLabel) negotiated", bundle: _appLocalizedBundle)
+                }
                 ?? String(localized: "PD source", bundle: _appLocalizedBundle)
-            postNotification(title: String(localized: "Charger connected", bundle: _appLocalizedBundle), body: body)
+            postNotification(
+                title: String(localized: "Charger connected", bundle: _appLocalizedBundle),
+                body: body)
         }
         for _ in removedPortKeys {
-            postNotification(title: String(localized: "Charger disconnected", bundle: _appLocalizedBundle), body: "")
+            postNotification(
+                title: String(localized: "Charger disconnected", bundle: _appLocalizedBundle),
+                body: "")
         }
     }
 
@@ -149,4 +163,3 @@ final class NotificationManager {
         }
     }
 }
-

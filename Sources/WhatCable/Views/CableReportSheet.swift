@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 import WhatCableCore
 
 /// Confirmation sheet shown before sending the user to GitHub to file a
@@ -14,7 +14,8 @@ struct CableReportSheet: View {
     @State private var includeSystemInfo: Bool = false
 
     private var payload: CableReport.Payload? {
-        CableReport.payload(for: cableIdentity, includeSystemInfo: includeSystemInfo, cioCapability: cioCapability)
+        CableReport.payload(
+            for: cableIdentity, includeSystemInfo: includeSystemInfo, cioCapability: cioCapability)
     }
 
     var body: some View {
@@ -24,15 +25,24 @@ struct CableReportSheet: View {
                     .font(.title2)
                     .foregroundStyle(.tint)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: "Report this cable", bundle: _appLocalizedBundle)).font(.title3).bold()
-                    Text(String(localized: "Opens a pre-filled GitHub issue in your browser. Nothing is sent until you submit there.", bundle: _appLocalizedBundle))
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                    Text(String(localized: "Report this cable", bundle: _appLocalizedBundle)).font(
+                        .title3
+                    ).bold()
+                    Text(
+                        String(
+                            localized:
+                                "Opens a pre-filled GitHub issue in your browser. Nothing is sent until you submit there.",
+                            bundle: _appLocalizedBundle)
+                    )
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
                 }
             }
 
-            Text(String(localized: "Preview of what will be included:", bundle: _appLocalizedBundle))
-                .font(.caption).foregroundStyle(.secondary)
+            Text(
+                String(localized: "Preview of what will be included:", bundle: _appLocalizedBundle)
+            )
+            .font(.caption).foregroundStyle(.secondary)
 
             if let payload {
                 ScrollView {
@@ -48,9 +58,17 @@ struct CableReportSheet: View {
 
             Toggle(isOn: $includeSystemInfo) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: "Include Mac model and macOS version", bundle: _appLocalizedBundle))
-                    Text(String(localized: "Helps the maintainer reproduce charger / cable behavior tied to specific hardware.", bundle: _appLocalizedBundle))
-                        .font(.caption).foregroundStyle(.secondary)
+                    Text(
+                        String(
+                            localized: "Include Mac model and macOS version",
+                            bundle: _appLocalizedBundle))
+                    Text(
+                        String(
+                            localized:
+                                "Helps the maintainer reproduce charger / cable behavior tied to specific hardware.",
+                            bundle: _appLocalizedBundle)
+                    )
+                    .font(.caption).foregroundStyle(.secondary)
                 }
             }
             .toggleStyle(.checkbox)
@@ -58,8 +76,11 @@ struct CableReportSheet: View {
             Divider()
 
             HStack {
-                Link(String(localized: "What gets shared?", bundle: _appLocalizedBundle), destination: URL(string: "https://github.com/darrylmorley/whatcable#privacy")!)
-                    .font(.caption)
+                Link(
+                    String(localized: "What gets shared?", bundle: _appLocalizedBundle),
+                    destination: URL(string: "https://github.com/darrylmorley/whatcable#privacy")!
+                )
+                .font(.caption)
                 Spacer()
                 Button(String(localized: "Cancel", bundle: _appLocalizedBundle), action: dismiss)
                     .keyboardShortcut(.cancelAction)
@@ -78,4 +99,3 @@ struct CableReportSheet: View {
         .frame(width: 560)
     }
 }
-

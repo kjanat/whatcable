@@ -13,6 +13,11 @@ import WhatCableCore
 public final class LinuxSnapshotProvider: CableSnapshotProvider, @unchecked Sendable {
     public init() {}
 
+    /// Builds a `CableSnapshot` populated with the current Linux hardware state.
+    ///
+    /// The snapshot includes Type‑C ports, power sources, identities, USB devices, power adapter state,
+    /// and Thunderbolt switches; other fields are set to Linux-appropriate defaults (empty arrays or `nil`).
+    /// - Returns: A `CableSnapshot` representing the current Linux Type‑C, USB, power supply, and Thunderbolt state.
     private func read() -> CableSnapshot {
         let typeC = LinuxTypeC.read()
         return CableSnapshot(
@@ -33,6 +38,9 @@ public final class LinuxSnapshotProvider: CableSnapshotProvider, @unchecked Send
         )
     }
 
+    /// Produce a `CableSnapshot` assembled from the current Linux sysfs state.
+    /// - Returns: A `CableSnapshot` built from data read under the Linux sysfs trees.
+    /// - Throws: `LinuxBackendError.typeCClassUnavailable` if the `/sys/class/typec` sysfs root is not present.
     public func snapshot() async throws -> CableSnapshot {
         guard Sysfs.exists(LinuxTypeC.root) else {
             throw LinuxBackendError.typeCClassUnavailable
@@ -40,6 +48,8 @@ public final class LinuxSnapshotProvider: CableSnapshotProvider, @unchecked Send
         return read()
     }
 
+    /// Creates an asynchronous stream that emits updated cable snapshots whenever the snapshot changes.
+    /// - Returns: An `AsyncThrowingStream<CableSnapshot, Error>` that polls the system once per second and yields a new `CableSnapshot` only when it differs from the last emitted value. The stream will finish with `LinuxBackendError.typeCClassUnavailable` if the `/sys/class/typec` sysfs root is not present.
     public func watch() -> AsyncThrowingStream<CableSnapshot, Error> {
         AsyncThrowingStream { continuation in
             let task = Task {
@@ -73,17 +83,16 @@ public enum LinuxBackendError: Error, CustomStringConvertible {
         switch self {
         case .typeCClassUnavailable:
             return """
-            no USB Type-C ports found at /sys/class/typec. This kernel may lack \
-            CONFIG_TYPEC, or no Type-C controller is exposed. WhatCable needs the \
-            USB Type-C class to read cable, power, and partner data.
-            """
+                no USB Type-C ports found at /sys/class/typec. This kernel may lack \
+                CONFIG_TYPEC, or no Type-C controller is exposed. WhatCable needs the \
+                USB Type-C class to read cable, power, and partner data.
+                """
         }
     }
 }
 
-/// Default backend on Linux. The CLI / GUI call this rather than naming
-/// `LinuxSnapshotProvider` directly, mirroring `makeDefaultSnapshotProvider()`
-/// in the Darwin backend.
+/// Provide the default snapshot provider for Linux.
+/// - Returns: A `CableSnapshotProvider` instance backed by the Linux sysfs implementation.
 public func makeDefaultSnapshotProvider() -> any CableSnapshotProvider {
     LinuxSnapshotProvider()
 }

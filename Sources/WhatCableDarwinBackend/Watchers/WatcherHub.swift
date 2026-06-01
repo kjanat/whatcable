@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 /// Single owner of the app's IOKit watchers. Lives in the backend (not the app
 /// target) so both the menu bar app and the Pro plugin can share one set of
@@ -10,13 +10,13 @@ import Combine
 public final class WatcherHub {
     public static let shared = WatcherHub()
 
-    public let portWatcher    = AppleHPMInterfaceWatcher()
-    public let deviceWatcher  = USBWatcher()
-    public let powerWatcher   = PowerSourceWatcher()
-    public let pdWatcher      = USBPDSOPWatcher()
-    public let tbWatcher      = IOIOThunderboltSwitchWatcher()
-    public let usb3Watcher    = USB3TransportWatcher()
-    public let trmWatcher     = TRMTransportWatcher()
+    public let portWatcher = AppleHPMInterfaceWatcher()
+    public let deviceWatcher = USBWatcher()
+    public let powerWatcher = PowerSourceWatcher()
+    public let pdWatcher = USBPDSOPWatcher()
+    public let tbWatcher = IOIOThunderboltSwitchWatcher()
+    public let usb3Watcher = USB3TransportWatcher()
+    public let trmWatcher = TRMTransportWatcher()
     public let displayWatcher = DisplayPortTransportWatcher()
 
     private var isStarted = false

@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 /// Unit tests for AdapterInfo and AdapterHVCEntry.
@@ -104,10 +105,12 @@ struct AdapterInfoTests {
 
     @Test("Not equal when HVC menu differs")
     func notEqualWhenHVCMenuDiffers() {
-        let a = AdapterInfo(watts: 100, isCharging: nil, source: "AC",
-                            hvcMenu: [AdapterHVCEntry(voltageMV: 20000, currentMA: 5000)])
-        let b = AdapterInfo(watts: 100, isCharging: nil, source: "AC",
-                            hvcMenu: [AdapterHVCEntry(voltageMV: 20000, currentMA: 3000)])
+        let a = AdapterInfo(
+            watts: 100, isCharging: nil, source: "AC",
+            hvcMenu: [AdapterHVCEntry(voltageMV: 20000, currentMA: 5000)])
+        let b = AdapterInfo(
+            watts: 100, isCharging: nil, source: "AC",
+            hvcMenu: [AdapterHVCEntry(voltageMV: 20000, currentMA: 3000)])
         #expect(a != b)
     }
 

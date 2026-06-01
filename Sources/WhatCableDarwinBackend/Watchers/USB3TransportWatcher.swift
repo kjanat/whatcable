@@ -37,18 +37,29 @@ public final class USB3TransportWatcher: ObservableObject {
         }
 
         let matching = IOServiceMatching("IOPortTransportStateUSB3")
-        IOServiceAddMatchingNotification(port, kIOMatchedNotification, matching, added, selfPtr, &addedIter)
+        IOServiceAddMatchingNotification(
+            port, kIOMatchedNotification, matching, added, selfPtr, &addedIter)
         handleAdded(addedIter)
 
         let matching2 = IOServiceMatching("IOPortTransportStateUSB3")
-        IOServiceAddMatchingNotification(port, kIOTerminatedNotification, matching2, removed, selfPtr, &removedIter)
+        IOServiceAddMatchingNotification(
+            port, kIOTerminatedNotification, matching2, removed, selfPtr, &removedIter)
         handleRemoved(removedIter)
     }
 
     public func stop() {
-        if addedIter != 0 { IOObjectRelease(addedIter); addedIter = 0 }
-        if removedIter != 0 { IOObjectRelease(removedIter); removedIter = 0 }
-        if let p = notifyPort { IONotificationPortDestroy(p); notifyPort = nil }
+        if addedIter != 0 {
+            IOObjectRelease(addedIter)
+            addedIter = 0
+        }
+        if removedIter != 0 {
+            IOObjectRelease(removedIter)
+            removedIter = 0
+        }
+        if let p = notifyPort {
+            IONotificationPortDestroy(p)
+            notifyPort = nil
+        }
         transports.removeAll()
     }
 
@@ -57,9 +68,13 @@ public final class USB3TransportWatcher: ObservableObject {
         // empty list mid-refresh. See issue #227.
         var rebuilt: [USB3Transport] = []
         var iter: io_iterator_t = 0
-        if IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("IOPortTransportStateUSB3"), &iter) == KERN_SUCCESS {
+        if IOServiceGetMatchingServices(
+            kIOMainPortDefault, IOServiceMatching("IOPortTransportStateUSB3"), &iter)
+            == KERN_SUCCESS
+        {
             while case let service = IOIteratorNext(iter), service != 0 {
-                if let t = makeTransport(from: service), !rebuilt.contains(where: { $0.id == t.id }) {
+                if let t = makeTransport(from: service), !rebuilt.contains(where: { $0.id == t.id })
+                {
                     rebuilt.append(t)
                 }
                 IOObjectRelease(service)
@@ -71,7 +86,8 @@ public final class USB3TransportWatcher: ObservableObject {
 
     private func handleAdded(_ iter: io_iterator_t) {
         while case let service = IOIteratorNext(iter), service != 0 {
-            if let t = makeTransport(from: service), !transports.contains(where: { $0.id == t.id }) {
+            if let t = makeTransport(from: service), !transports.contains(where: { $0.id == t.id })
+            {
                 transports.append(t)
             }
             IOObjectRelease(service)
@@ -98,20 +114,24 @@ public final class USB3TransportWatcher: ObservableObject {
         // typically when the service is being torn down mid-read. The
         // per-key call has no such failure path. See issue #181.
         func read(_ key: String) -> Any? {
-            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                .takeRetainedValue()
         }
 
-        let parentType = (read("ParentBuiltInPortType") as? NSNumber)?.intValue
+        let parentType =
+            (read("ParentBuiltInPortType") as? NSNumber)?.intValue
             ?? (read("ParentPortType") as? NSNumber)?.intValue
             ?? 0
-        let parentNumber = (read("ParentBuiltInPortNumber") as? NSNumber)?.intValue
+        let parentNumber =
+            (read("ParentBuiltInPortNumber") as? NSNumber)?.intValue
             ?? (read("ParentPortNumber") as? NSNumber)?.intValue
             ?? Int(((read("Priority") as? NSNumber)?.uint64Value ?? 0) & 0xFF)
         let portKey = "\(parentType)/\(parentNumber)"
 
         let signaling = (read("SuperSpeedSignaling") as? NSNumber)?.intValue
         let signalingDesc = read("SuperSpeedSignalingDescription") as? String
-        let dataRole = (read("DataRole") as? String)
+        let dataRole =
+            (read("DataRole") as? String)
             ?? (read("PortDataRole") as? String)
 
         return USB3Transport(

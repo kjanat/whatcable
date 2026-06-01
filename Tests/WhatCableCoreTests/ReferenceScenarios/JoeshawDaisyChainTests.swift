@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 /// Reference-scenario test anchored on the joeshaw daisy-chain dump at
@@ -126,13 +127,16 @@ struct JoeshawDaisyChainTests {
             return
         }
         #expect(active == 40)
-        #expect(diag!.cableSignalConflict == true,
+        #expect(
+            diag!.cableSignalConflict == true,
             "10 Gbps e-marker vs 40 Gbps CIO is a cross-tier conflict. Flag must be set.")
         #expect(diag!.facts.cableEmarkerGbps == 10)
         #expect(diag!.facts.cableControllerGbps == 40)
-        #expect(diag!.facts.cableGbps == 40,
+        #expect(
+            diag!.facts.cableGbps == 40,
             "Controller (40) must win over the under-reporting e-marker (10).")
-        #expect(diag!.detail.contains("disagree"),
+        #expect(
+            diag!.detail.contains("disagree"),
             "Detail must surface the disagreement: \(diag!.detail)")
     }
 }

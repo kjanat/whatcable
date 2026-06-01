@@ -115,7 +115,10 @@ public struct DisplayDiagnostic {
     /// inference is gated on the corroborating degraded link.
     public var billboardNote: String? {
         guard billboardPresent, isWarning else { return nil }
-        return String(localized: "A Billboard device is present on this port. That usually appears when an Alt Mode like DisplayPort was set up but didn't fully come up. Your display is below its best mode, so a re-plug, a different cable, or a different adapter may bring it up. Some docks show a Billboard device normally, so this isn't always a fault.", bundle: _coreLocalizedBundle)
+        return String(
+            localized:
+                "A Billboard device is present on this port. That usually appears when an Alt Mode like DisplayPort was set up but didn't fully come up. Your display is below its best mode, so a re-plug, a different cable, or a different adapter may bring it up. Some docks show a Billboard device normally, so this isn't always a fault.",
+            bundle: _coreLocalizedBundle)
     }
 
     /// True for the cases worth a glance in the inline verdict. `.fine` is the
@@ -147,7 +150,9 @@ extension DisplayDiagnostic {
 
     /// Production entry point. Parses the EDID from the DisplayPort node's own
     /// monitor blob, then defers to the injectable initialiser below.
-    public init?(dp: IOPortTransportStateDisplayPort, cable: USBPDSOP? = nil, billboardPresent: Bool = false) {
+    public init?(
+        dp: IOPortTransportStateDisplayPort, cable: USBPDSOP? = nil, billboardPresent: Bool = false
+    ) {
         let edid = dp.monitor?.edid.flatMap { EDIDInfo($0) }
         self.init(dp: dp, edid: edid, cable: cable, billboardPresent: billboardPresent)
     }
@@ -159,7 +164,10 @@ extension DisplayDiagnostic {
     /// `cable` is the port's USB-PD e-marker (SOP' / SOP''), used only to tell
     /// whether the cable is active (issue #111: active cables misreport, so we
     /// never exonerate one on its e-marker).
-    public init?(dp: IOPortTransportStateDisplayPort, edid: EDIDInfo?, cable: USBPDSOP? = nil, billboardPresent: Bool = false) {
+    public init?(
+        dp: IOPortTransportStateDisplayPort, edid: EDIDInfo?, cable: USBPDSOP? = nil,
+        billboardPresent: Bool = false
+    ) {
         guard dp.link.active else { return nil }
         self.billboardPresent = billboardPresent
 
@@ -184,7 +192,8 @@ extension DisplayDiagnostic {
         // (issue #111). The e-marker's claimed rating is never used to
         // exonerate. Assigned once here so it holds on every return path.
         let cableKnownPassive = cable?.cableVDO?.cableType == .passive
-        let cableUnlikely = dp.link.tunneled
+        let cableUnlikely =
+            dp.link.tunneled
             || (lanes > 0 && lanes == maxLanes && cableKnownPassive)
         self.cableAssessment = cableUnlikely ? .unlikelyTheCable : .inconclusive
 
@@ -202,9 +211,17 @@ extension DisplayDiagnostic {
             )
             self.bottleneck = .unknownMode
             self.summary = String(localized: "Display connected", bundle: _coreLocalizedBundle)
-            let base = String(localized: "A display is connected but its capabilities aren't readable, so there's nothing to compare the link against.", bundle: _coreLocalizedBundle)
+            let base = String(
+                localized:
+                    "A display is connected but its capabilities aren't readable, so there's nothing to compare the link against.",
+                bundle: _coreLocalizedBundle)
             if let delivered {
-                self.detail = base + " " + String(localized: "The link is carrying about \(Self.gbps(delivered)) (\(lanes) of \(maxLanes) lanes).", bundle: _coreLocalizedBundle)
+                self.detail =
+                    base + " "
+                    + String(
+                        localized:
+                            "The link is carrying about \(Self.gbps(delivered)) (\(lanes) of \(maxLanes) lanes).",
+                        bundle: _coreLocalizedBundle)
             } else {
                 self.detail = base
             }
@@ -236,7 +253,10 @@ extension DisplayDiagnostic {
             self.facts = baseFacts
             self.bottleneck = .unknownMode
             self.summary = String(localized: "Display connected", bundle: _coreLocalizedBundle)
-            self.detail = String(localized: "Your \(name) is connected, but the link rate isn't readable, so there's nothing to compare its capability against.", bundle: _coreLocalizedBundle)
+            self.detail = String(
+                localized:
+                    "Your \(name) is connected, but the link rate isn't readable, so there's nothing to compare its capability against.",
+                bundle: _coreLocalizedBundle)
             return
         }
 
@@ -244,8 +264,12 @@ extension DisplayDiagnostic {
         if needed <= delivered * (1 + Self.tolerance) {
             self.facts = baseFacts
             self.bottleneck = .fine
-            self.summary = String(localized: "Display running at full quality", bundle: _coreLocalizedBundle)
-            self.detail = String(localized: "Your \(name) is connected and the link has the bandwidth for its top mode. Nothing is holding the picture back.", bundle: _coreLocalizedBundle)
+            self.summary = String(
+                localized: "Display running at full quality", bundle: _coreLocalizedBundle)
+            self.detail = String(
+                localized:
+                    "Your \(name) is connected and the link has the bandwidth for its top mode. Nothing is holding the picture back.",
+                bundle: _coreLocalizedBundle)
             return
         }
 
@@ -256,23 +280,42 @@ extension DisplayDiagnostic {
         let haveLabel = Self.gbps(delivered)
         let laneLabel: String
         if let rate {
-            laneLabel = String(localized: "\(lanes) of \(maxLanes) lanes at \(rate)", bundle: _coreLocalizedBundle)
+            laneLabel = String(
+                localized: "\(lanes) of \(maxLanes) lanes at \(rate)", bundle: _coreLocalizedBundle)
         } else {
-            laneLabel = String(localized: "\(lanes) of \(maxLanes) lanes", bundle: _coreLocalizedBundle)
+            laneLabel = String(
+                localized: "\(lanes) of \(maxLanes) lanes", bundle: _coreLocalizedBundle)
         }
-        let canDo = edid.maxRefreshHz
+        let canDo =
+            edid.maxRefreshHz
             .map { String(localized: "up to \($0)Hz", bundle: _coreLocalizedBundle) }
-            ?? String(localized: "a higher mode than the link is carrying", bundle: _coreLocalizedBundle)
-        let dscCaveat = " " + String(localized: "This estimate assumes standard colour; a display using compression (DSC) may reach more.", bundle: _coreLocalizedBundle)
+            ?? String(
+                localized: "a higher mode than the link is carrying", bundle: _coreLocalizedBundle)
+        let dscCaveat =
+            " "
+            + String(
+                localized:
+                    "This estimate assumes standard colour; a display using compression (DSC) may reach more.",
+                bundle: _coreLocalizedBundle)
 
         if let sinkType {
             self.facts = baseFacts
             self.bottleneck = .adapterLimit
-            self.summary = String(localized: "Video is going through a \(sinkType) adapter", bundle: _coreLocalizedBundle)
+            self.summary = String(
+                localized: "Video is going through a \(sinkType) adapter",
+                bundle: _coreLocalizedBundle)
             if let branchDevice {
-                self.detail = String(localized: "Your \(name) is reached through a USB-C to \(sinkType) adapter that reports as \(branchDevice), currently carrying about \(haveLabel) (\(laneLabel)), short of the monitor's top mode (\(canDo), about \(needLabel)). With an adapter in the chain, the adapter's own limit may be the cap rather than the cable. A native DisplayPort connection, or a higher-spec adapter, would tell you which.", bundle: _coreLocalizedBundle) + dscCaveat
+                self.detail =
+                    String(
+                        localized:
+                            "Your \(name) is reached through a USB-C to \(sinkType) adapter that reports as \(branchDevice), currently carrying about \(haveLabel) (\(laneLabel)), short of the monitor's top mode (\(canDo), about \(needLabel)). With an adapter in the chain, the adapter's own limit may be the cap rather than the cable. A native DisplayPort connection, or a higher-spec adapter, would tell you which.",
+                        bundle: _coreLocalizedBundle) + dscCaveat
             } else {
-                self.detail = String(localized: "Your \(name) is reached through a USB-C to \(sinkType) adapter, and the link isn't currently carrying the monitor's top mode (\(canDo), about \(needLabel)); it's carrying about \(haveLabel) (\(laneLabel)). With an adapter in the chain, the adapter's own limit may be the cap rather than the cable. Trying the monitor over native DisplayPort, or a higher-spec adapter, would tell you which.", bundle: _coreLocalizedBundle) + dscCaveat
+                self.detail =
+                    String(
+                        localized:
+                            "Your \(name) is reached through a USB-C to \(sinkType) adapter, and the link isn't currently carrying the monitor's top mode (\(canDo), about \(needLabel)); it's carrying about \(haveLabel) (\(laneLabel)). With an adapter in the chain, the adapter's own limit may be the cap rather than the cable. Trying the monitor over native DisplayPort, or a higher-spec adapter, would tell you which.",
+                        bundle: _coreLocalizedBundle) + dscCaveat
             }
             return
         }
@@ -292,25 +335,44 @@ extension DisplayDiagnostic {
         if lanes > 0, lanes == maxLanes, let perLane, perLane >= Self.highRatePerLaneGbps {
             self.facts = baseFacts
             self.bottleneck = .compressionPlausible
-            self.summary = String(localized: "Display may be using compression to reach its top mode", bundle: _coreLocalizedBundle)
-            self.detail = String(localized: "Your \(name) can run \(canDo), which uncompressed would need about \(needLabel). This link is already running every lane at a high rate, carrying about \(haveLabel) (\(laneLabel)). Many high-resolution displays use compression (DSC) to fit their top mode through a link like this, so the link rate alone can't tell whether you're already at your best mode. If the picture looks right, it most likely is.", bundle: _coreLocalizedBundle)
+            self.summary = String(
+                localized: "Display may be using compression to reach its top mode",
+                bundle: _coreLocalizedBundle)
+            self.detail = String(
+                localized:
+                    "Your \(name) can run \(canDo), which uncompressed would need about \(needLabel). This link is already running every lane at a high rate, carrying about \(haveLabel) (\(laneLabel)). Many high-resolution displays use compression (DSC) to fit their top mode through a link like this, so the link rate alone can't tell whether you're already at your best mode. If the picture looks right, it most likely is.",
+                bundle: _coreLocalizedBundle)
             return
         }
 
         self.facts = baseFacts
         self.bottleneck = .belowMonitorMax
-        self.summary = String(localized: "Monitor can do more than the link is carrying", bundle: _coreLocalizedBundle)
+        self.summary = String(
+            localized: "Monitor can do more than the link is carrying", bundle: _coreLocalizedBundle
+        )
         if cableUnlikely {
             // The cable is exonerated on demonstrated evidence, so point the
             // user at the likely real cause (the selected mode / the Mac)
             // instead of leaving the cable under suspicion.
             if dp.link.tunneled {
-                self.detail = String(localized: "Your \(name) can run \(canDo), which needs about \(needLabel), but the link is currently carrying about \(haveLabel) (\(laneLabel)). The video is tunneled over Thunderbolt or USB4, so the cable carries far more than the display needs: this is unlikely to be the cable. It's most likely the resolution or refresh rate selected in Display settings, or this Mac's limit for this display.", bundle: _coreLocalizedBundle) + dscCaveat
+                self.detail =
+                    String(
+                        localized:
+                            "Your \(name) can run \(canDo), which needs about \(needLabel), but the link is currently carrying about \(haveLabel) (\(laneLabel)). The video is tunneled over Thunderbolt or USB4, so the cable carries far more than the display needs: this is unlikely to be the cable. It's most likely the resolution or refresh rate selected in Display settings, or this Mac's limit for this display.",
+                        bundle: _coreLocalizedBundle) + dscCaveat
             } else {
-                self.detail = String(localized: "Your \(name) can run \(canDo), which needs about \(needLabel), but the link is currently carrying about \(haveLabel) (\(laneLabel)). The cable is already carrying every DisplayPort lane this Mac provides, so this is unlikely to be the cable. It's most likely the resolution or refresh rate selected in Display settings.", bundle: _coreLocalizedBundle) + dscCaveat
+                self.detail =
+                    String(
+                        localized:
+                            "Your \(name) can run \(canDo), which needs about \(needLabel), but the link is currently carrying about \(haveLabel) (\(laneLabel)). The cable is already carrying every DisplayPort lane this Mac provides, so this is unlikely to be the cable. It's most likely the resolution or refresh rate selected in Display settings.",
+                        bundle: _coreLocalizedBundle) + dscCaveat
             }
         } else {
-            self.detail = String(localized: "Your \(name) can run \(canDo), which needs about \(needLabel), but the link is currently carrying about \(haveLabel) (\(laneLabel)). If you've selected the higher mode and aren't getting it, the cable or adapter is the likely limit; if you haven't tried it, selecting it may retrain the link to a higher rate.", bundle: _coreLocalizedBundle) + dscCaveat
+            self.detail =
+                String(
+                    localized:
+                        "Your \(name) can run \(canDo), which needs about \(needLabel), but the link is currently carrying about \(haveLabel) (\(laneLabel)). If you've selected the higher mode and aren't getting it, the cable or adapter is the likely limit; if you haven't tried it, selecting it may retrain the link to a higher rate.",
+                    bundle: _coreLocalizedBundle) + dscCaveat
         }
     }
 

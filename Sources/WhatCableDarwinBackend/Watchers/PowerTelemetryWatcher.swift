@@ -70,7 +70,8 @@ public final class PowerTelemetryWatcher: ObservableObject {
         // source-attributed contract so MagSafe and contracted ports appear,
         // each on the correct port.
         var portSamples = Self.portPowerSamples(from: dict["PowerOutDetails"], portKeys: portKeys)
-        let controllerSamples = Self.portPowerSamplesFromControllerInfo(dict["PortControllerInfo"], sources: sources)
+        let controllerSamples = Self.portPowerSamplesFromControllerInfo(
+            dict["PortControllerInfo"], sources: sources)
         let coveredKeys = Set(portSamples.map(\.portKey))
         for sample in controllerSamples where !coveredKeys.contains(sample.portKey) {
             portSamples.append(sample)
@@ -82,14 +83,16 @@ public final class PowerTelemetryWatcher: ObservableObject {
         // falling back to SystemLoad (the system's draw).
         let batteryVoltageMV = wcInt(dict["Voltage"])
         let reportedBatteryPower = abs(wcInt(telemetry["BatteryPower"]))
-        let batteryPowerMW = reportedBatteryPower != 0 ? reportedBatteryPower : wcInt(telemetry["SystemLoad"])
+        let batteryPowerMW =
+            reportedBatteryPower != 0 ? reportedBatteryPower : wcInt(telemetry["SystemLoad"])
         // Pack current. Apple Silicon usually reports 0 for Amperage /
         // InstantAmperage, so when those are blank derive it from the measured
         // power and voltage: P = V x I, hence I[mA] = P[mW] x 1000 / V[mV].
         // Exact, not a guess, and consistent with the displayed P and V.
         let instant = wcInt(dict["InstantAmperage"])
         let measuredCurrent = abs(instant != 0 ? instant : wcInt(dict["Amperage"]))
-        let batteryCurrentMA = measuredCurrent != 0
+        let batteryCurrentMA =
+            measuredCurrent != 0
             ? measuredCurrent
             : (batteryVoltageMV > 0 ? batteryPowerMW * 1000 / batteryVoltageMV : 0)
         // A winning contract can linger for a moment after unplug on this
@@ -115,9 +118,10 @@ public final class PowerTelemetryWatcher: ObservableObject {
     private func appendRegressionSamples(from portSamples: [PortPowerSample]) {
         let usable = portSamples.compactMap { sample -> RegressionSample? in
             guard sample.current > 0,
-                  sample.configuredVoltage > 0,
-                  sample.adapterVoltage > 0,
-                  sample.configuredVoltage >= sample.adapterVoltage else {
+                sample.configuredVoltage > 0,
+                sample.adapterVoltage > 0,
+                sample.configuredVoltage >= sample.adapterVoltage
+            else {
                 return nil
             }
             return RegressionSample(
@@ -166,7 +170,9 @@ public final class PowerTelemetryWatcher: ObservableObject {
             )
         }
 
-        let sxy = samples.reduce(0) { $0 + (($1.current - meanCurrent) * ($1.voltageDrop - meanDrop)) }
+        let sxy = samples.reduce(0) {
+            $0 + (($1.current - meanCurrent) * ($1.voltageDrop - meanDrop))
+        }
         let slope = sxy / sxx
         let intercept = meanDrop - slope * meanCurrent
         let total = samples.reduce(0) { $0 + pow($1.voltageDrop - meanDrop, 2) }
@@ -192,7 +198,8 @@ public final class PowerTelemetryWatcher: ObservableObject {
         )
     }
 
-    private static func portPowerSamples(from value: Any?, portKeys: [String]) -> [PortPowerSample] {
+    private static func portPowerSamples(from value: Any?, portKeys: [String]) -> [PortPowerSample]
+    {
         wcArray(value).enumerated().compactMap { offset, item in
             let dict = wcDictionary(item)
             guard !dict.isEmpty else { return nil }
@@ -205,7 +212,10 @@ public final class PowerTelemetryWatcher: ObservableObject {
             // PowerOutDetails only contains USB-C ports, so default to "2/".
             let key: String
             if rawPortIndex > 0,
-               let match = portKeys.first(where: { $0.hasSuffix("/\(rawPortIndex)") && !$0.hasPrefix("17/") }) {
+                let match = portKeys.first(where: {
+                    $0.hasSuffix("/\(rawPortIndex)") && !$0.hasPrefix("17/")
+                })
+            {
                 key = match
             } else if rawPortIndex > 0 {
                 key = "2/\(rawPortIndex)"
@@ -252,7 +262,9 @@ public final class PowerTelemetryWatcher: ObservableObject {
     /// exact negotiated tier even where the source's winning PDO is coarse
     /// (e.g. MagSafe). No match, or an ambiguous one, falls back to the
     /// source's own winning figures: never a guessed key.
-    nonisolated static func portPowerSamplesFromControllerInfo(_ controllerInfo: Any?, sources: [PowerSource]) -> [PortPowerSample] {
+    nonisolated static func portPowerSamplesFromControllerInfo(
+        _ controllerInfo: Any?, sources: [PowerSource]
+    ) -> [PortPowerSample] {
         let items = wcArray(controllerInfo)
         let maxPowers = items.map { wcInt(wcDictionary($0)["PortControllerMaxPower"]) }
         let joinByIndex = PowerControllerPortJoin.portKeysByContent(
@@ -260,9 +272,13 @@ public final class PowerTelemetryWatcher: ObservableObject {
             sources: sources
         )
 
-        return Dictionary(grouping: sources, by: \.portKey).compactMap { portKey, portSources -> PortPowerSample? in
-            guard let source = PowerSource.preferredChargingSource(in: portSources) ?? portSources.first,
-                  let winning = source.winning, winning.maxPowerMW > 0 else { return nil }
+        return Dictionary(grouping: sources, by: \.portKey).compactMap {
+            portKey, portSources -> PortPowerSample? in
+            guard
+                let source = PowerSource.preferredChargingSource(in: portSources)
+                    ?? portSources.first,
+                let winning = source.winning, winning.maxPowerMW > 0
+            else { return nil }
 
             var voltage = winning.voltageMV
             var current = winning.maxCurrentMA
@@ -272,7 +288,9 @@ public final class PowerTelemetryWatcher: ObservableObject {
             // source's winning figures are the fallback.
             if let index = joinByIndex.first(where: { $0.value == portKey })?.key {
                 let dict = wcDictionary(items[index])
-                let rdo = UInt32(bitPattern: Int32(truncatingIfNeeded: wcInt(dict["PortControllerActiveContractRdo"])))
+                let rdo = UInt32(
+                    bitPattern: Int32(
+                        truncatingIfNeeded: wcInt(dict["PortControllerActiveContractRdo"])))
                 let operatingCurrent = Int((rdo >> 10) & 0x3FF) * 10
                 if let negotiated = decodeNegotiatedContract(
                     pdoList: dict["PortControllerPortPDO"],
@@ -342,7 +360,8 @@ public final class PowerTelemetryWatcher: ObservableObject {
         // selected PDO's max current). If that doesn't single one out, the
         // Mac negotiates the highest voltage tier at a given wattage.
         if operatingCurrentMA > 0,
-           let match = tied.first(where: { $0.currentMA == operatingCurrentMA }) {
+            let match = tied.first(where: { $0.currentMA == operatingCurrentMA })
+        {
             return (match.voltageMV, match.currentMA)
         }
         let pick = tied.max { $0.voltageMV < $1.voltageMV }!
@@ -365,14 +384,18 @@ public final class PowerTelemetryWatcher: ObservableObject {
         var keys: [String] = []
         for cls in classes {
             var iter: io_iterator_t = 0
-            guard IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(cls), &iter) == KERN_SUCCESS else {
+            guard
+                IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(cls), &iter)
+                    == KERN_SUCCESS
+            else {
                 continue
             }
             defer { IOObjectRelease(iter) }
             while case let service = IOIteratorNext(iter), service != 0 {
                 defer { IOObjectRelease(service) }
                 func read(_ key: String) -> Any? {
-                    IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+                    IORegistryEntryCreateCFProperty(
+                        service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
                 }
                 let portType = read("PortTypeDescription") as? String
                 let isRealPort = (portType == "USB-C" || portType?.hasPrefix("MagSafe") == true)
@@ -396,7 +419,10 @@ public final class PowerTelemetryWatcher: ObservableObject {
 
     public nonisolated static func appleSmartBatteryProperties() -> [String: Any]? {
         var iter: io_iterator_t = 0
-        guard IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("AppleSmartBattery"), &iter) == KERN_SUCCESS else {
+        guard
+            IOServiceGetMatchingServices(
+                kIOMainPortDefault, IOServiceMatching("AppleSmartBattery"), &iter) == KERN_SUCCESS
+        else {
             return nil
         }
         defer { IOObjectRelease(iter) }
@@ -410,8 +436,11 @@ public final class PowerTelemetryWatcher: ObservableObject {
             // down mid-read, so the IOCFUnserializeBinary crash path (issue #181)
             // does not apply here.
             var props: Unmanaged<CFMutableDictionary>?
-            guard IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0) == KERN_SUCCESS,
-                  let dict = props?.takeRetainedValue() as? [String: Any] else {
+            guard
+                IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0)
+                    == KERN_SUCCESS,
+                let dict = props?.takeRetainedValue() as? [String: Any]
+            else {
                 continue
             }
             return dict

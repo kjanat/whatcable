@@ -15,7 +15,10 @@ struct TestKitSettingsSection: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
                     Button(action: { showingConsent = true }) {
-                        Label(String(localized: "Contribute Diagnostic Data", bundle: _appLocalizedBundle), systemImage: "waveform.path.ecg")
+                        Label(
+                            String(
+                                localized: "Contribute Diagnostic Data", bundle: _appLocalizedBundle
+                            ), systemImage: "waveform.path.ecg")
                     }
                     .disabled(runner.isRunning)
                     .buttonStyle(.bordered)
@@ -61,8 +64,10 @@ struct TestKitSettingsSection: View {
                     .foregroundStyle(.secondary)
             }
         case .done(let passed, let failed):
-            let label = failed > 0
-                ? String(localized: "\(passed) passed, \(failed) failed", bundle: _appLocalizedBundle)
+            let label =
+                failed > 0
+                ? String(
+                    localized: "\(passed) passed, \(failed) failed", bundle: _appLocalizedBundle)
                 : String(localized: "\(passed) probes submitted", bundle: _appLocalizedBundle)
             Text(label)
                 .scaledFont(.caption)
@@ -81,26 +86,38 @@ struct TestKitConsentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label(String(localized: "Contribute Diagnostic Data", bundle: _appLocalizedBundle), systemImage: "waveform.path.ecg")
-                .scaledFont(.headline, weight: .bold)
+            Label(
+                String(localized: "Contribute Diagnostic Data", bundle: _appLocalizedBundle),
+                systemImage: "waveform.path.ecg"
+            )
+            .scaledFont(.headline, weight: .bold)
 
             VStack(alignment: .leading, spacing: 12) {
                 infoRow(
                     icon: "cpu",
                     title: String(localized: "What happens", bundle: _appLocalizedBundle),
-                    detail: String(localized: "WhatCable runs 14 IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection.", bundle: _appLocalizedBundle)
+                    detail: String(
+                        localized:
+                            "WhatCable runs 14 IOKit probes that read raw USB-C and Thunderbolt data from your Mac's port controller registers. The results are sent to a secure server to help improve cable and port detection.",
+                        bundle: _appLocalizedBundle)
                 )
 
                 infoRow(
                     icon: "list.clipboard",
                     title: String(localized: "What is collected", bundle: _appLocalizedBundle),
-                    detail: String(localized: "Raw IOKit registry properties for each USB-C port, the model and capabilities of any connected display (its EDID, with the serial number removed), your macOS version, and chip type. This is the same data visible in System Information.", bundle: _appLocalizedBundle)
+                    detail: String(
+                        localized:
+                            "Raw IOKit registry properties for each USB-C port, the model and capabilities of any connected display (its EDID, with the serial number removed), your macOS version, and chip type. This is the same data visible in System Information.",
+                        bundle: _appLocalizedBundle)
                 )
 
                 infoRow(
                     icon: "lock.shield",
                     title: String(localized: "Privacy", bundle: _appLocalizedBundle),
-                    detail: String(localized: "Your machine's hardware UUID is hashed with SHA-256 before sending. No names, accounts, serial numbers, or personal data are collected or stored.", bundle: _appLocalizedBundle)
+                    detail: String(
+                        localized:
+                            "Your machine's hardware UUID is hashed with SHA-256 before sending. No names, accounts, serial numbers, or personal data are collected or stored.",
+                        bundle: _appLocalizedBundle)
                 )
             }
 

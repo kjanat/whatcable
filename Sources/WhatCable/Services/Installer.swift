@@ -1,6 +1,6 @@
+import AppKit
 // In-process installer for the self-update path.
 import Foundation
-import AppKit
 import os.log
 
 /// Downloads a new release zip from GitHub, validates its code signature
@@ -9,7 +9,8 @@ import os.log
 @MainActor
 final class Installer: ObservableObject {
     static let shared = Installer()
-    private nonisolated static let log = Logger(subsystem: "uk.whatcable.whatcable", category: "installer")
+    private nonisolated static let log = Logger(
+        subsystem: "uk.whatcable.whatcable", category: "installer")
     private static let expectedBundleID = "uk.whatcable.whatcable"
 
     enum State: Equatable {
@@ -81,7 +82,8 @@ final class Installer: ObservableObject {
         try validateZipEntries(zip)
         try run("/usr/bin/unzip", ["-q", zip.path, "-d", dir.path])
 
-        let contents = try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
+        let contents = try FileManager.default.contentsOfDirectory(
+            at: dir, includingPropertiesForKeys: nil)
         let apps = contents.filter { $0.pathExtension == "app" }
         guard apps.count == 1, apps[0].lastPathComponent == "WhatCable.app" else {
             throw InstallError("Expected exactly one WhatCable.app in the downloaded zip")
@@ -105,7 +107,8 @@ final class Installer: ObservableObject {
         let newTeam = try teamIdentifier(of: new)
         let currentTeam = try teamIdentifier(of: current)
         if newTeam != currentTeam {
-            throw InstallError("Signature mismatch: refusing to install (current \(currentTeam), new \(newTeam))")
+            throw InstallError(
+                "Signature mismatch: refusing to install (current \(currentTeam), new \(newTeam))")
         }
         // Check bundle ID is exactly what we expect.
         let bundleID = Bundle(url: new)?.bundleIdentifier ?? ""
@@ -132,44 +135,45 @@ final class Installer: ObservableObject {
 
     private func launchSwapScript(newApp: URL, currentApp: URL) throws {
         let script = """
-        #!/bin/bash
-        set -e
-        PID=\(ProcessInfo.processInfo.processIdentifier)
-        NEW=\(shellQuote(newApp.path))
-        OLD=\(shellQuote(currentApp.path))
-        BACKUP="${OLD}.backup"
+            #!/bin/bash
+            set -e
+            PID=\(ProcessInfo.processInfo.processIdentifier)
+            NEW=\(shellQuote(newApp.path))
+            OLD=\(shellQuote(currentApp.path))
+            BACKUP="${OLD}.backup"
 
-        # Wait up to 30s for the running app to exit
-        for _ in $(seq 1 60); do
-            if ! kill -0 "$PID" 2>/dev/null; then break; fi
-            sleep 0.5
-        done
+            # Wait up to 30s for the running app to exit
+            for _ in $(seq 1 60); do
+                if ! kill -0 "$PID" 2>/dev/null; then break; fi
+                sleep 0.5
+            done
 
-        # Move old bundle to backup instead of deleting it.
-        # If the swap fails, the user can rename .backup back.
-        rm -rf "$BACKUP"
-        mv "$OLD" "$BACKUP"
-
-        if mv "$NEW" "$OLD"; then
-            open "$OLD"
-            sleep 2
+            # Move old bundle to backup instead of deleting it.
+            # If the swap fails, the user can rename .backup back.
             rm -rf "$BACKUP"
-        else
-            # Swap failed; remove any partial destination before restoring.
-            rm -rf "$OLD"
-            mv "$BACKUP" "$OLD"
-            open "$OLD"
-        fi
+            mv "$OLD" "$BACKUP"
 
-        # Clean up this script and the temp directory.
-        rm -rf "$(dirname "$0")"
-        rm -f "$0"
-        """
+            if mv "$NEW" "$OLD"; then
+                open "$OLD"
+                sleep 2
+                rm -rf "$BACKUP"
+            else
+                # Swap failed; remove any partial destination before restoring.
+                rm -rf "$OLD"
+                mv "$BACKUP" "$OLD"
+                open "$OLD"
+            fi
+
+            # Clean up this script and the temp directory.
+            rm -rf "$(dirname "$0")"
+            rm -f "$0"
+            """
 
         let scriptURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("whatcable-swap-\(UUID().uuidString).sh")
         try script.write(to: scriptURL, atomically: true, encoding: .utf8)
-        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: scriptURL.path)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755], ofItemAtPath: scriptURL.path)
 
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/bash")
@@ -202,7 +206,9 @@ final class Installer: ObservableObject {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(data: data, encoding: .utf8) ?? ""
         if task.terminationStatus != 0 {
-            throw InstallError("\(launchPath) failed (\(task.terminationStatus)): \(output.trimmingCharacters(in: .whitespacesAndNewlines))")
+            throw InstallError(
+                "\(launchPath) failed (\(task.terminationStatus)): \(output.trimmingCharacters(in: .whitespacesAndNewlines))"
+            )
         }
         return output
     }
@@ -216,6 +222,3 @@ private struct InstallError: LocalizedError {
     let errorDescription: String?
     init(_ message: String) { self.errorDescription = message }
 }
-
-
-

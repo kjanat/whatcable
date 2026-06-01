@@ -63,7 +63,7 @@ struct JSONFormatterTests {
 
     private func parse(_ s: String) -> [String: Any] {
         guard let data = s.data(using: .utf8),
-              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else {
             Issue.record("output was not a JSON object")
             return [:]
@@ -104,7 +104,7 @@ struct JSONFormatterTests {
         // available; their presence is exercised in dedicated tests below.
         let expected: Set<String> = [
             "name", "type", "className", "connectionActive", "pdCapable", "status",
-            "headline", "subtitle", "bullets", "transports", "powerSources"
+            "headline", "subtitle", "bullets", "transports", "powerSources",
         ]
         let actual = Set(first.keys)
         #expect(
@@ -193,8 +193,10 @@ struct JSONFormatterTests {
         let obj = parse(json)
         let portObj = (obj["ports"] as? [[String: Any]])?.first ?? [:]
         let transports = try #require(portObj["transports"] as? [String: Any])
-        #expect(transports["usb3Speed"] as? String == nil,
-            "USB2-only link must not emit usb3Speed, got: \(String(describing: transports["usb3Speed"]))")
+        #expect(
+            transports["usb3Speed"] as? String == nil,
+            "USB2-only link must not emit usb3Speed, got: \(String(describing: transports["usb3Speed"]))"
+        )
         #expect(transports["active"] as? [String] == ["CC", "USB2"])
     }
 
@@ -274,7 +276,7 @@ struct JSONFormatterTests {
                 (3 << 27) | UInt32(vendorID),
                 0,
                 0,
-                cableVDO
+                cableVDO,
             ],
             specRevision: 3
         )
@@ -346,7 +348,8 @@ struct JSONFormatterTests {
     private func activeCableIdentity(vdo4: UInt32, vendorID: Int = 0x05AC) -> USBPDSOP {
         // Active cable: ufpProductType bits 29..27 = 100 = 4.
         // Cable VDO with valid active termination + USB4 Gen3 + 5A + valid latency.
-        let cableVDO: UInt32 = UInt32(0b011) | UInt32(2 << 5) | Self.validLatency | UInt32(0b10 << 11)
+        let cableVDO: UInt32 =
+            UInt32(0b011) | UInt32(2 << 5) | Self.validLatency | UInt32(0b10 << 11)
         return USBPDSOP(
             id: 1,
             endpoint: .sopPrime,
@@ -360,7 +363,7 @@ struct JSONFormatterTests {
                 0,
                 0,
                 cableVDO,
-                vdo4
+                vdo4,
             ],
             specRevision: 3
         )
@@ -369,7 +372,8 @@ struct JSONFormatterTests {
     @Test("Active block omitted for passive cable")
     func activeBlockOmittedForPassiveCable() throws {
         let port = makePort()
-        let passive = cableIdentity(vendorID: 0x05AC, cableVDO: (0b10 << 5) | 0b011 | Self.validLatency)
+        let passive = cableIdentity(
+            vendorID: 0x05AC, cableVDO: (0b10 << 5) | 0b011 | Self.validLatency)
         let json = try JSONFormatter.render(
             ports: [port], sources: [], identities: [passive], showRaw: false
         )
@@ -411,8 +415,9 @@ struct JSONFormatterTests {
             ports: [makePort()], sources: [], identities: [], showRaw: false
         )
         // showRaw=false should leave rawProperties absent / null.
-        #expect(json.contains("\"rawProperties\" : {") == false,
-                "rawProperties should not appear as a populated object")
+        #expect(
+            json.contains("\"rawProperties\" : {") == false,
+            "rawProperties should not appear as a populated object")
     }
 
     @Test("Raw properties included when requested")
@@ -464,10 +469,12 @@ struct JSONFormatterTests {
         #expect(portJSON["pdCapable"] as? Bool == false)
         // And the port-level bullet should not claim a missing e-marker.
         let bullets = portJSON["bullets"] as? [String] ?? []
-        #expect(bullets.contains(where: { $0.contains("No e-marker reported") }) == false,
-                "no-PD port should not claim a missing e-marker, got: \(bullets)")
-        #expect(bullets.contains(where: { $0.contains("can't read cable details") }),
-                "expected 'port can't read cable details' bullet, got: \(bullets)")
+        #expect(
+            bullets.contains(where: { $0.contains("No e-marker reported") }) == false,
+            "no-PD port should not claim a missing e-marker, got: \(bullets)")
+        #expect(
+            bullets.contains(where: { $0.contains("can't read cable details") }),
+            "expected 'port can't read cable details' bullet, got: \(bullets)")
     }
 
     // MARK: - JSON validity
@@ -504,7 +511,7 @@ struct JSONFormatterTests {
     @Test("IOThunderboltSwitches encoded at top level")
     func ioThunderboltSwitchesEncodedAtTopLevel() throws {
         let host = IOThunderboltSwitch(
-            id: 408750268121704800,
+            id: 408_750_268_121_704_800,
             className: "IOIOThunderboltSwitchType5",
             vendorID: 1452,
             vendorName: "Apple Inc.",
@@ -539,7 +546,7 @@ struct JSONFormatterTests {
         #expect(switches.count == 1)
 
         let sw = switches[0]
-        #expect(sw["uid"] as? Int64 == 408750268121704800)
+        #expect(sw["uid"] as? Int64 == 408_750_268_121_704_800)
         #expect(sw["depth"] as? Int == 0)
         #expect(sw["modelName"] as? String == "iOS")
 
@@ -580,7 +587,9 @@ struct JSONFormatterTests {
             thunderboltSwitches: [host]
         )
         let obj = parse(json)
-        let port = ((obj["thunderboltSwitches"] as? [[String: Any]])?.first?["ports"] as? [[String: Any]])?.first ?? [:]
+        let port =
+            ((obj["thunderboltSwitches"] as? [[String: Any]])?.first?["ports"] as? [[String: Any]])?
+            .first ?? [:]
         let gen = port["generation"] as? String ?? ""
         #expect(gen == "tb5", "TB5 should be reported as confirmed")
         #expect(port["linkLabel"] as? String == "Up to 40 Gb/s × 2")
@@ -836,7 +845,7 @@ struct JSONFormatterTests {
     @Test("MagSafe port has null thunderboltSwitchUID despite colliding suffix")
     func magSafePortHasNullThunderboltSwitchUid() throws {
         let host = IOThunderboltSwitch(
-            id: 408750268121704800,
+            id: 408_750_268_121_704_800,
             className: "IOIOThunderboltSwitchType5",
             vendorID: 1452, vendorName: "Apple Inc.", modelName: "iOS",
             routerID: 0, depth: 0, routeString: 0,
@@ -886,13 +895,16 @@ struct JSONFormatterTests {
         // matters is that the colliding USB-C@1 switch UID does NOT
         // appear.
         let switchUID = port["thunderboltSwitchUID"]
-        #expect(switchUID == nil || switchUID is NSNull,
-            "MagSafe should not inherit USB-C@1's TB switch UID via the @N suffix collision; got: \(String(describing: switchUID))")
+        #expect(
+            switchUID == nil || switchUID is NSNull,
+            "MagSafe should not inherit USB-C@1's TB switch UID via the @N suffix collision; got: \(String(describing: switchUID))"
+        )
         // Defence-in-depth: no data-link verdict should appear on this
         // port either, since `carriesData` is false. Same encoding
         // rule, so the key is either absent or null.
         let dataLink = port["dataLink"]
-        #expect(dataLink == nil || dataLink is NSNull,
+        #expect(
+            dataLink == nil || dataLink is NSNull,
             "MagSafe should not produce a data-link verdict, got: \(String(describing: dataLink))")
     }
 
@@ -964,10 +976,14 @@ struct JSONFormatterTests {
         let obj = parse(json)
         let port = (obj["ports"] as? [[String: Any]])?.first ?? [:]
         let dataLink = port["dataLink"] as? [String: Any] ?? [:]
-        #expect(dataLink["bottleneck"] as? String == "cableContradictsActive",
-            "expected cableContradictsActive bottleneck, got: \(String(describing: dataLink["bottleneck"]))")
-        #expect(dataLink["isWarning"] as? Bool == true,
-            "cableContradictsActive should warn; got isWarning: \(String(describing: dataLink["isWarning"]))")
+        #expect(
+            dataLink["bottleneck"] as? String == "cableContradictsActive",
+            "expected cableContradictsActive bottleneck, got: \(String(describing: dataLink["bottleneck"]))"
+        )
+        #expect(
+            dataLink["isWarning"] as? Bool == true,
+            "cableContradictsActive should warn; got isWarning: \(String(describing: dataLink["isWarning"]))"
+        )
     }
 
     @Test("Display verdict appears as a port `display` object")
@@ -993,7 +1009,8 @@ struct JSONFormatterTests {
         )
         let port = (parse(json)["ports"] as? [[String: Any]])?.first ?? [:]
         let display = port["display"] as? [String: Any] ?? [:]
-        #expect(display["bottleneck"] as? String == "belowMonitorMax",
+        #expect(
+            display["bottleneck"] as? String == "belowMonitorMax",
             "got: \(String(describing: display["bottleneck"]))")
         #expect(display["monitorName"] as? String == "LEN G34w-10")
         #expect(display["lanes"] as? Int == 2)

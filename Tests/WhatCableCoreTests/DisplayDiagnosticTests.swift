@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("Display Diagnostic")
@@ -136,7 +137,8 @@ struct DisplayDiagnosticTests {
     func tunneledBeatsActive() throws {
         // The tunnel itself proves capability, independent of the e-marker.
         let diag = try #require(
-            DisplayDiagnostic(dp: makeDP(lanes: 2, tunneled: true), edid: g34w, cable: cable(active: true))
+            DisplayDiagnostic(
+                dp: makeDP(lanes: 2, tunneled: true), edid: g34w, cable: cable(active: true))
         )
         #expect(diag.cableAssessment == .unlikelyTheCable)
     }
@@ -375,7 +377,8 @@ struct DisplayDiagnosticTests {
     @Test("Billboard note fires behind a degraded adapter link too")
     func billboardNoteOnAdapterShortfall() throws {
         let diag = try #require(
-            DisplayDiagnostic(dp: makeDP(lanes: 2, dfpType: "HDMI"), edid: g34w, billboardPresent: true)
+            DisplayDiagnostic(
+                dp: makeDP(lanes: 2, dfpType: "HDMI"), edid: g34w, billboardPresent: true)
         )
         #expect(diag.bottleneck == .adapterLimit)
         #expect(diag.billboardNote != nil)

@@ -28,8 +28,8 @@ public struct PowerOption: Hashable {
 /// (e.g. "USB-PD" + "Brick ID").
 public struct PowerSource: Identifiable, Hashable {
     public let id: UInt64
-    public let name: String                // "USB-PD", "Brick ID"
-    public let parentPortType: Int         // 0x2 = USB-C, 0x11 = MagSafe 3
+    public let name: String  // "USB-PD", "Brick ID"
+    public let parentPortType: Int  // 0x2 = USB-C, 0x11 = MagSafe 3
     public let parentPortNumber: Int
     public let options: [PowerOption]
     public let winning: PowerOption?

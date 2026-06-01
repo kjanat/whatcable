@@ -2,18 +2,18 @@ import Foundation
 
 public struct AppleHPMInterface: Identifiable, Hashable {
     public let id: UInt64
-    public let serviceName: String          // e.g. "Port-USB-C@1"
-    public let className: String            // e.g. "AppleHPMInterfaceType10"
-    public let portDescription: String?     // "Port-USB-C@1"
-    public let portTypeDescription: String? // "USB-C"
+    public let serviceName: String  // e.g. "Port-USB-C@1"
+    public let className: String  // e.g. "AppleHPMInterfaceType10"
+    public let portDescription: String?  // "Port-USB-C@1"
+    public let portTypeDescription: String?  // "USB-C"
     public let portNumber: Int?
     public let connectionActive: Bool?
     public let activeCable: Bool?
     public let opticalCable: Bool?
     public let usbActive: Bool?
     public let superSpeedActive: Bool?
-    public let usbModeType: Int?            // raw enum
-    public let usbConnectString: String?    // "None" / human label
+    public let usbModeType: Int?  // raw enum
+    public let usbConnectString: String?  // "None" / human label
     public let transportsSupported: [String]
     public let transportsActive: [String]
     public let transportsProvisioned: [String]
@@ -58,7 +58,8 @@ public struct AppleHPMInterface: Identifiable, Hashable {
         // MagSafe port. Real ports have a `PortTypeDescription` and a name
         // like `Port-USB-C@N` / `Port-MagSafe 3@N`.
         let portType = read("PortTypeDescription") as? String
-        let isRealPort = (portType == "USB-C" || portType?.hasPrefix("MagSafe") == true)
+        let isRealPort =
+            (portType == "USB-C" || portType?.hasPrefix("MagSafe") == true)
             && serviceName.hasPrefix("Port-")
         guard isRealPort else { return nil }
 
@@ -275,7 +276,8 @@ public struct AppleHPMInterface: Identifiable, Hashable {
         deviceBusIndex: Int?
     ) -> Bool {
         guard let portName = cleanPortName(portName),
-              let deviceName = cleanPortName(deviceName) else {
+            let deviceName = cleanPortName(deviceName)
+        else {
             return false
         }
         if portName == deviceName {
@@ -343,7 +345,9 @@ func stringifyProperty(_ value: Any) -> String {
     case let d as Data: return d.map { String(format: "%02X", $0) }.joined(separator: " ")
     case let a as [Any]: return "[" + a.map { stringifyProperty($0) }.joined(separator: ", ") + "]"
     case let d as [String: Any]:
-        return "{" + d.sorted { $0.key < $1.key }.map { "\($0.key): \(stringifyProperty($0.value))" }.joined(separator: ", ") + "}"
+        return "{"
+            + d.sorted { $0.key < $1.key }.map { "\($0.key): \(stringifyProperty($0.value))" }
+            .joined(separator: ", ") + "}"
     default: return String(describing: value)
     }
 }

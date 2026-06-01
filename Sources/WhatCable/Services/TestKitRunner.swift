@@ -1,13 +1,14 @@
 import CryptoKit
 import Foundation
-import os.log
 import WhatCableCore
+import os.log
 
 @MainActor
 final class TestKitRunner: ObservableObject {
     static let shared = TestKitRunner()
 
-    private nonisolated static let log = Logger(subsystem: "uk.whatcable.whatcable", category: "test-kit")
+    private nonisolated static let log = Logger(
+        subsystem: "uk.whatcable.whatcable", category: "test-kit")
     private static let apiURL = "https://whatcable-test-kit.darrylmorley-uk.workers.dev"
 
     enum State: Equatable {
@@ -54,7 +55,8 @@ final class TestKitRunner: ObservableObject {
     private func runAllProbes() async {
         let machineID = await Task.detached { Self.machineID() }.value
         let ver = ProcessInfo.processInfo.operatingSystemVersion
-        let macosVersion = ver.patchVersion > 0
+        let macosVersion =
+            ver.patchVersion > 0
             ? "\(ver.majorVersion).\(ver.minorVersion).\(ver.patchVersion)"
             : "\(ver.majorVersion).\(ver.minorVersion)"
         let chip = Self.chipName()
@@ -215,13 +217,15 @@ final class TestKitRunner: ObservableObject {
         let fm = FileManager.default
 
         if let bundlePath = Bundle.main.resourceURL?.appendingPathComponent("probes"),
-           fm.fileExists(atPath: bundlePath.path) {
+            fm.fileExists(atPath: bundlePath.path)
+        {
             return bundlePath
         }
 
         let execURL = URL(fileURLWithPath: ProcessInfo.processInfo.arguments[0])
             .resolvingSymlinksInPath()
-        let contentsDir = execURL
+        let contentsDir =
+            execURL
             .deletingLastPathComponent()
             .deletingLastPathComponent()
         let fallback = contentsDir.appendingPathComponent("Resources/probes")

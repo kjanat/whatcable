@@ -32,6 +32,13 @@ enum LinuxTypeC {
         var powerSources: [PowerSource] = []
     }
 
+    /// Read Type-C port state and USB Power Delivery information from the sysfs root and aggregate it into a single result.
+    ///
+    /// Enumerates Type-C port directories under the module's sysfs root and, for each discovered port, collects a port interface description, any partner and cable identity VDOs, any entered alternate modes (e.g., DisplayPort/Thunderbolt) observed for the partner, and advertised USB-PD source capabilities exposed by the partner or port.
+    /// - Returns: A `Result` containing three collections:
+    ///   - `ports`: `AppleHPMInterface` entries describing each discovered Type-C port.
+    ///   - `identities`: `USBPDSOP` records for partner and cable identity VDOs that were present.
+    ///   - `powerSources`: `PowerSource` entries derived from PD source-capabilities advertised by partners or the port.
     static func read() -> Result {
         var result = Result()
         // Port directories are named "port0", "port1", ... Partner/cable and
@@ -88,6 +95,15 @@ enum LinuxTypeC {
 
     // MARK: - Port
 
+    /// Constructs an `AppleHPMInterface` describing a USB-C port using sysfs attributes.
+    /// - Parameters:
+    ///   - index: Zero-based port index used for `id`, `serviceName`, and descriptions.
+    ///   - portDir: Filesystem path to the port's sysfs directory (e.g. `/sys/class/typec/portN`).
+    ///   - cableDir: Filesystem path to the cable's sysfs directory (e.g. `/sys/class/typec/portN-cable`).
+    ///   - connected: `true` when a partner is present (partner sysfs directory exists); used to determine active transports.
+    ///   - dpActive: `true` when DisplayPort alternate mode is entered on the partner; adds `DisplayPort` and `USB2` to active transports.
+    ///   - tbActive: `true` when Thunderbolt alternate mode is entered on the partner; adds `CIO` and `USB2` to active transports.
+    /// - Returns: An `AppleHPMInterface` populated from sysfs, with `id`, `serviceName`, port descriptions, `connectionActive`, `activeCable`, `plugOrientation`, `transportsSupported`, `transportsActive`, and merged `rawProperties` (port attributes plus `cable.*` prefixed cable attributes).
     private static func port(
         index: Int,
         portDir: String,
@@ -97,7 +113,7 @@ enum LinuxTypeC {
         tbActive: Bool
     ) -> AppleHPMInterface {
         let orientation = Sysfs.string("\(portDir)/orientation")
-        let cableType = Sysfs.string("\(cableDir)/type")          // passive / active
+        let cableType = Sysfs.string("\(cableDir)/type")  // passive / active
 
         // Every PD-capable Type-C port carries CC, so advertise it as a
         // supported transport — WhatCableCore reads "CC" in
@@ -105,8 +121,14 @@ enum LinuxTypeC {
         var supported = ["CC", "USB2"]
         var active: [String] = []
         if connected {
-            if dpActive { active.append("DisplayPort"); supported.append("DisplayPort") }
-            if tbActive { active.append("CIO"); supported.append("CIO") }
+            if dpActive {
+                active.append("DisplayPort")
+                supported.append("DisplayPort")
+            }
+            if tbActive {
+                active.append("CIO")
+                supported.append("CIO")
+            }
             // USB-C keeps the USB2 D+/D- pair wired alongside DisplayPort and
             // Thunderbolt alt modes, so USB2 is genuinely active there. For a
             // bare partner the Type-C class exposes no USB-data signal, so we
@@ -149,8 +171,9 @@ enum LinuxTypeC {
         )
     }
 
-    /// Map the kernel's `orientation` string onto the small integer code the
-    /// model carries (1 = normal, 2 = reversed, 0 = unknown/none).
+    /// Convert a kernel orientation string into the internal orientation code.
+    /// - Parameter s: Kernel-provided orientation string (commonly "normal", "reverse", "none", or "unknown").
+    /// - Returns: `1` for "normal", `2` for "reverse", `0` for "none" or "unknown", `nil` if the input is `nil` or unrecognized.
     private static func orientationCode(_ s: String?) -> Int? {
         switch s?.lowercased() {
         case "normal": return 1
@@ -162,10 +185,12 @@ enum LinuxTypeC {
 
     // MARK: - Identity (Discover Identity VDOs)
 
-    /// Assemble a `USBPDSOP` from a sysfs `identity/` directory. The kernel
-    /// exposes each VDO as a `0x`-prefixed hex file. Returns `nil` when the
-    /// directory or the ID Header VDO is absent (an unmarked cable, or no
-    /// partner), so callers can simply skip it.
+    /// Constructs a `USBPDSOP` by reading identity VDOs and PD revision from a sysfs identity directory.
+    /// - Parameters:
+    ///   - dir: Filesystem path to the identity directory (contains `id_header`, `product`, `cert_stat`, and optional `product_type_vdo*` files).
+    ///   - endpoint: The SOP endpoint for this identity (for example `.sop` or `.sopPrime`).
+    ///   - portNumber: The parent USB-C port number used to derive the identity record ID.
+    /// - Returns: A `USBPDSOP` populated from the available VDOs and PD revision, or `nil` if the directory is absent or lacks a valid `id_header`.
     private static func identity(
         in dir: String,
         endpoint: USBPDSOP.Endpoint,
@@ -214,6 +239,8 @@ enum LinuxTypeC {
         )
     }
 
+    /// Map a `USBPDSOP.Endpoint` value to its numeric endpoint tag.
+    /// - Returns: `0` for `.sop`, `1` for `.sopPrime`, `2` for `.sopDoublePrime`, `3` for `.unknown`.
     private static func endpointTag(_ e: USBPDSOP.Endpoint) -> Int {
         switch e {
         case .sop: return 0
@@ -223,6 +250,9 @@ enum LinuxTypeC {
         }
     }
 
+    /// Extracts the major version number from a USB Power Delivery revision string.
+    /// - Parameter s: A revision string typically formatted as `"major.minor"` (for example, `"3.0"`); may be `nil`.
+    /// - Returns: The parsed major version as an `Int`, or `0` if the input is `nil` or cannot be parsed.
     private static func pdRevisionCode(_ s: String?) -> Int {
         guard let major = s?.split(separator: ".").first, let n = Int(major) else { return 0 }
         return n
@@ -230,15 +260,19 @@ enum LinuxTypeC {
 
     // MARK: - Alternate modes
 
-    /// SVIDs of the partner alternate modes that are currently *entered*
-    /// (`active == yes`). Alt-mode directories are named `<port>-partner.N`.
+    /// Returns the list of SVIDs for alternate modes that are currently entered by the partner device.
+    /// - Parameters:
+    ///   - partnerDir: Filesystem path to the partner's sysfs directory.
+    ///   - portName: The port directory name prefix (for example `"port0"`) used to match partner mode entries.
+    /// - Returns: An array of 32-bit SVID values for active alternate modes; empty if none or if the partner directory does not exist.
     private static func activeAltModes(partnerDir: String, portName: String) -> [UInt32] {
         guard Sysfs.exists(partnerDir) else { return [] }
         var svids: [UInt32] = []
         for entry in Sysfs.list(partnerDir) where entry.hasPrefix("\(portName)-partner.") {
             let modeDir = "\(partnerDir)/\(entry)"
             guard Sysfs.bool("\(modeDir)/active") == true,
-                  let svid = Sysfs.hex32("\(modeDir)/svid") else { continue }
+                let svid = Sysfs.hex32("\(modeDir)/svid")
+            else { continue }
             svids.append(svid)
         }
         return svids
@@ -246,9 +280,12 @@ enum LinuxTypeC {
 
     // MARK: - Power (source PDOs)
 
-    /// The PDOs the partner advertises as a power source (i.e. the charger
-    /// menu). Prefers the partner's own PD object, then the port's. Returns an
-    /// empty array when no source capabilities are exposed.
+    /// Reads USB Power Delivery source capabilities from sysfs for a given Type‑C port and returns corresponding `PowerSource` entries.
+    /// - Parameters:
+    ///   - portDir: Filesystem path to the port's sysfs directory (e.g. "/sys/class/typec/portN").
+    ///   - partnerDir: Filesystem path to the partner's sysfs directory (e.g. "/sys/class/typec/portN-partner").
+    ///   - portNumber: Numeric port index used as the `PowerSource` identifier and parent port number.
+    /// - Returns: A single-element array with a `PowerSource` describing the port's advertised source `PowerOption`s, or an empty array if no source-capabilities are exposed.
     private static func powerSources(
         portDir: String,
         partnerDir: String,
@@ -256,7 +293,7 @@ enum LinuxTypeC {
     ) -> [PowerSource] {
         let candidates = [
             "\(partnerDir)/usb_power_delivery/source-capabilities",
-            "\(portDir)/usb_power_delivery/source-capabilities"
+            "\(portDir)/usb_power_delivery/source-capabilities",
         ]
         guard let capsDir = candidates.first(where: { Sysfs.exists($0) }) else { return [] }
 
@@ -265,7 +302,10 @@ enum LinuxTypeC {
         // "<n>:battery", "<n>:programmable_supply". Sort numerically by index.
         let pdoDirs = Sysfs.list(capsDir)
             .filter { $0.contains(":") }
-            .sorted { (Int($0.prefix(while: { $0 != ":" })) ?? 0) < (Int($1.prefix(while: { $0 != ":" })) ?? 0) }
+            .sorted {
+                (Int($0.prefix(while: { $0 != ":" })) ?? 0)
+                    < (Int($1.prefix(while: { $0 != ":" })) ?? 0)
+            }
 
         for pdo in pdoDirs {
             let dir = "\(capsDir)/\(pdo)"
@@ -288,19 +328,27 @@ enum LinuxTypeC {
         ]
     }
 
+    /// Converts a PDO sysfs directory into a `PowerOption` describing voltage/current/power limits.
+    /// - Parameters:
+    ///   - dir: Path to the PDO sysfs directory (e.g., a `*:kind` entry under `source-capabilities`).
+    ///   - kind: PDO kind string (e.g., `"fixed_supply"`, `"variable_supply"`, `"programmable_supply"`, `"battery"`).
+    /// - Returns: A `PowerOption` populated with `voltageMV` (millivolts), `maxCurrentMA` (milliamps) and `maxPowerMW` (milliwatts), or `nil` if the `kind` is unsupported or required sysfs values are missing.
     private static func powerOption(dir: String, kind: String) -> PowerOption? {
         switch kind {
         case "fixed_supply":
             guard let mv = Sysfs.int("\(dir)/voltage"),
-                  let ma = Sysfs.int("\(dir)/maximum_current") else { return nil }
+                let ma = Sysfs.int("\(dir)/maximum_current")
+            else { return nil }
             return PowerOption(voltageMV: mv, maxCurrentMA: ma, maxPowerMW: mv * ma / 1000)
         case "variable_supply", "programmable_supply":
             guard let mv = Sysfs.int("\(dir)/maximum_voltage"),
-                  let ma = Sysfs.int("\(dir)/maximum_current") else { return nil }
+                let ma = Sysfs.int("\(dir)/maximum_current")
+            else { return nil }
             return PowerOption(voltageMV: mv, maxCurrentMA: ma, maxPowerMW: mv * ma / 1000)
         case "battery":
             guard let mv = Sysfs.int("\(dir)/maximum_voltage"),
-                  let mw = Sysfs.int("\(dir)/maximum_power") else { return nil }
+                let mw = Sysfs.int("\(dir)/maximum_power")
+            else { return nil }
             let ma = mv > 0 ? mw * 1000 / mv : 0
             return PowerOption(voltageMV: mv, maxCurrentMA: ma, maxPowerMW: mw)
         default:

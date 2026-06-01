@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("PDO Decoding")
@@ -54,7 +55,7 @@ struct PDODecodingTests {
     func negativeIoregOverflow() {
         // ioreg sometimes reports negative values for unsigned 32-bit PDOs.
         // Simulates masking a negative Int with 0xFFFFFFFF before decoding.
-        let negative: Int = -1073741524
+        let negative: Int = -1_073_741_524
         let masked = UInt32(bitPattern: Int32(truncatingIfNeeded: negative))
         let pdo = PDO.decode(rawValue: masked)
         // Type bits 31:30 = 0b11 = APDO, remaining bits decode per APDO layout

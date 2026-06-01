@@ -30,7 +30,7 @@ public struct USBCPinMap: Hashable, Sendable {
         case usb2
         case usb3PairA
         case usb3PairB
-        case dpLane(Int)   // 0-3
+        case dpLane(Int)  // 0-3
         case dpAux
         case unknown(Int)
 
@@ -145,15 +145,15 @@ extension USBCPinMap {
         // rx2 drives A10/A11 (SuperSpeed RX pair 2).
         // sbu1 drives A8.
         let topRow: [Pin] = [
-            Pin(id: "A1",  signal: .ground),
-            Pin(id: "A2",  signal: tx1),
-            Pin(id: "A3",  signal: tx1),
-            Pin(id: "A4",  signal: .vbus),
-            Pin(id: "A5",  signal: .cc),
-            Pin(id: "A6",  signal: .usb2),
-            Pin(id: "A7",  signal: .usb2),
-            Pin(id: "A8",  signal: sbu1),
-            Pin(id: "A9",  signal: .vbus),
+            Pin(id: "A1", signal: .ground),
+            Pin(id: "A2", signal: tx1),
+            Pin(id: "A3", signal: tx1),
+            Pin(id: "A4", signal: .vbus),
+            Pin(id: "A5", signal: .cc),
+            Pin(id: "A6", signal: .usb2),
+            Pin(id: "A7", signal: .usb2),
+            Pin(id: "A8", signal: sbu1),
+            Pin(id: "A9", signal: .vbus),
             Pin(id: "A10", signal: rx2),
             Pin(id: "A11", signal: rx2),
             Pin(id: "A12", signal: .ground),
@@ -167,15 +167,15 @@ extension USBCPinMap {
             Pin(id: "B12", signal: .ground),
             Pin(id: "B11", signal: rx1),
             Pin(id: "B10", signal: rx1),
-            Pin(id: "B9",  signal: .vbus),
-            Pin(id: "B8",  signal: sbu2),
-            Pin(id: "B7",  signal: .usb2),
-            Pin(id: "B6",  signal: .usb2),
-            Pin(id: "B5",  signal: .cc),
-            Pin(id: "B4",  signal: .vbus),
-            Pin(id: "B3",  signal: tx2),
-            Pin(id: "B2",  signal: tx2),
-            Pin(id: "B1",  signal: .ground),
+            Pin(id: "B9", signal: .vbus),
+            Pin(id: "B8", signal: sbu2),
+            Pin(id: "B7", signal: .usb2),
+            Pin(id: "B6", signal: .usb2),
+            Pin(id: "B5", signal: .cc),
+            Pin(id: "B4", signal: .vbus),
+            Pin(id: "B3", signal: tx2),
+            Pin(id: "B2", signal: tx2),
+            Pin(id: "B1", signal: .ground),
         ]
 
         return USBCPinMap(

@@ -34,12 +34,14 @@ public final class DisplayPortTransportWatcher: ObservableObject {
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         let added: IOServiceMatchingCallback = { refcon, iterator in
             guard let refcon else { return }
-            let watcher = Unmanaged<DisplayPortTransportWatcher>.fromOpaque(refcon).takeUnretainedValue()
+            let watcher = Unmanaged<DisplayPortTransportWatcher>.fromOpaque(refcon)
+                .takeUnretainedValue()
             Task { @MainActor in watcher.handleAdded(iterator) }
         }
         let removed: IOServiceMatchingCallback = { refcon, iterator in
             guard let refcon else { return }
-            let watcher = Unmanaged<DisplayPortTransportWatcher>.fromOpaque(refcon).takeUnretainedValue()
+            let watcher = Unmanaged<DisplayPortTransportWatcher>.fromOpaque(refcon)
+                .takeUnretainedValue()
             Task { @MainActor in watcher.handleRemoved(iterator) }
         }
 
@@ -67,8 +69,14 @@ public final class DisplayPortTransportWatcher: ObservableObject {
     }
 
     public func stop() {
-        if addedIterator != 0 { IOObjectRelease(addedIterator); addedIterator = 0 }
-        if removedIterator != 0 { IOObjectRelease(removedIterator); removedIterator = 0 }
+        if addedIterator != 0 {
+            IOObjectRelease(addedIterator)
+            addedIterator = 0
+        }
+        if removedIterator != 0 {
+            IOObjectRelease(removedIterator)
+            removedIterator = 0
+        }
         if let port = notifyPort {
             IONotificationPortDestroy(port)
             notifyPort = nil
@@ -82,7 +90,10 @@ public final class DisplayPortTransportWatcher: ObservableObject {
         // the `updates` stream contract is unchanged. See issue #227.
         var rebuilt: [DisplayPortUpdate] = []
         var iter: io_iterator_t = 0
-        if IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("IOPortTransportStateDisplayPort"), &iter) == KERN_SUCCESS {
+        if IOServiceGetMatchingServices(
+            kIOMainPortDefault, IOServiceMatching("IOPortTransportStateDisplayPort"), &iter)
+            == KERN_SUCCESS
+        {
             while case let service = IOIteratorNext(iter), service != 0 {
                 if let update = makeUpdate(from: service) {
                     rebuilt.removeAll {
@@ -118,7 +129,8 @@ public final class DisplayPortTransportWatcher: ObservableObject {
             // stored, not the registry location fallback that wcPortIndex(from:[:])
             // falls through to when the dict is empty (W1 fix).
             func read(_ key: String) -> Any? {
-                IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+                IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                    .takeRetainedValue()
             }
             let portIndex = wcPortIndex(read: read, service: service)
             let portType = wcPortType(read: read, service: service)
@@ -136,7 +148,8 @@ public final class DisplayPortTransportWatcher: ObservableObject {
         // typically when the service is being torn down mid-read. The
         // per-key call has no such failure path. See issue #181.
         func read(_ key: String) -> Any? {
-            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                .takeRetainedValue()
         }
 
         let link = DisplayPortLink(
@@ -178,7 +191,7 @@ public final class DisplayPortTransportWatcher: ObservableObject {
             monitor: monitor,
             dfpType: (read("DFP Type Description") as? String)
                 ?? (metadata?["DFP Type Description"] as? String)
-                ?? read("DFP Type").map { String(wcInt($0)) },
+                    ?? read("DFP Type").map { String(wcInt($0)) },
             branchDeviceId: (read("BranchDeviceID") as? String)
                 ?? (metadata?["BranchDeviceID"] as? String),
             branchDeviceOUI: wcData(read("BranchDeviceOUI"))

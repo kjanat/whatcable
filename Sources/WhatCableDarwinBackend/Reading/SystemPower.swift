@@ -7,7 +7,9 @@ import WhatCableCore
 /// IOKit views.
 public enum SystemPower {
     public static func currentAdapter() -> AdapterInfo? {
-        guard let info = IOPSCopyExternalPowerAdapterDetails()?.takeRetainedValue() as? [String: Any] else {
+        guard
+            let info = IOPSCopyExternalPowerAdapterDetails()?.takeRetainedValue() as? [String: Any]
+        else {
             return nil
         }
         let w = (info["Watts"] as? NSNumber)?.intValue
@@ -116,4 +118,3 @@ extension ChargingDiagnostic {
         )
     }
 }
-

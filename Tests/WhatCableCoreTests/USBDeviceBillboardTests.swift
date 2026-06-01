@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("USB Billboard device detection")
@@ -39,7 +40,9 @@ struct USBDeviceBillboardTests {
     @Test("An ordinary device is not a Billboard device")
     func ordinaryDeviceIsNot() {
         // bDeviceClass 9 is a USB hub, the common case next to a dock.
-        #expect(!device(deviceClass: 9, ioClassName: "IOUSBHostDevice", productName: "USB3.0 Hub").isBillboardDevice)
+        #expect(
+            !device(deviceClass: 9, ioClassName: "IOUSBHostDevice", productName: "USB3.0 Hub")
+                .isBillboardDevice)
         #expect(!device().isBillboardDevice)
     }
 }

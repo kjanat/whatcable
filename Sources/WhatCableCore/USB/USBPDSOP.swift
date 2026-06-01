@@ -4,9 +4,9 @@ import Foundation
 /// `IOPortTransportComponentCCUSBPDSOP` services.
 public struct USBPDSOP: Identifiable, Hashable {
     public enum Endpoint: String {
-        case sop = "SOP"        // Port partner (the connected device/charger)
+        case sop = "SOP"  // Port partner (the connected device/charger)
         case sopPrime = "SOP'"  // Cable's near-side e-marker
-        case sopDoublePrime = "SOP''" // Cable's far-side e-marker
+        case sopDoublePrime = "SOP''"  // Cable's far-side e-marker
         case unknown
     }
 
@@ -53,14 +53,16 @@ public struct USBPDSOP: Identifiable, Hashable {
     /// or 0 for cables that haven't gone through certification.
     public var certStatVDO: PDVDO.CertStat? {
         guard endpoint == .sopPrime || endpoint == .sopDoublePrime,
-              vdos.count > 1 else { return nil }
+            vdos.count > 1
+        else { return nil }
         return PDVDO.decodeCertStat(vdos[1])
     }
 
     /// The Cable VDO is at index 3 (VDO[3] in 1-indexed PD spec terms).
     public var cableVDO: PDVDO.CableVDO? {
         guard endpoint == .sopPrime || endpoint == .sopDoublePrime,
-              vdos.count > 3 else { return nil }
+            vdos.count > 3
+        else { return nil }
         let header = idHeader
         let isActive = header?.ufpProductType == .activeCable
         return PDVDO.decodeCableVDO(vdos[3], isActive: isActive)
@@ -72,8 +74,9 @@ public struct USBPDSOP: Identifiable, Hashable {
     /// limits, idle-state power, and per-lane / per-protocol support.
     public var activeCableVDO2: PDVDO.ActiveCableVDO2? {
         guard endpoint == .sopPrime || endpoint == .sopDoublePrime,
-              vdos.count > 4,
-              idHeader?.ufpProductType == .activeCable else { return nil }
+            vdos.count > 4,
+            idHeader?.ufpProductType == .activeCable
+        else { return nil }
         return PDVDO.decodeActiveCableVDO2(vdos[4])
     }
 

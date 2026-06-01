@@ -57,17 +57,21 @@ public final class TRMTransportWatcher: ObservableObject {
 
         for cls in Self.watchedClasses {
             var addIter: io_iterator_t = 0
-            if IOServiceAddMatchingNotification(port, kIOMatchedNotification,
-                                                 IOServiceMatching(cls),
-                                                 added, selfPtr, &addIter) == KERN_SUCCESS {
+            if IOServiceAddMatchingNotification(
+                port, kIOMatchedNotification,
+                IOServiceMatching(cls),
+                added, selfPtr, &addIter) == KERN_SUCCESS
+            {
                 addedIters.append(addIter)
                 handleAdded(addIter)
             }
 
             var rmIter: io_iterator_t = 0
-            if IOServiceAddMatchingNotification(port, kIOTerminatedNotification,
-                                                 IOServiceMatching(cls),
-                                                 removed, selfPtr, &rmIter) == KERN_SUCCESS {
+            if IOServiceAddMatchingNotification(
+                port, kIOTerminatedNotification,
+                IOServiceMatching(cls),
+                removed, selfPtr, &rmIter) == KERN_SUCCESS
+            {
                 removedIters.append(rmIter)
                 handleRemoved(rmIter)
             }
@@ -79,7 +83,10 @@ public final class TRMTransportWatcher: ObservableObject {
         addedIters.removeAll()
         for iter in removedIters { IOObjectRelease(iter) }
         removedIters.removeAll()
-        if let p = notifyPort { IONotificationPortDestroy(p); notifyPort = nil }
+        if let p = notifyPort {
+            IONotificationPortDestroy(p)
+            notifyPort = nil
+        }
         transports.removeAll()
         cioCapabilities.removeAll()
     }
@@ -93,7 +100,9 @@ public final class TRMTransportWatcher: ObservableObject {
         var rebuiltCIO: [CIOCableCapability] = []
         for cls in Self.watchedClasses {
             var iter: io_iterator_t = 0
-            if IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(cls), &iter) == KERN_SUCCESS {
+            if IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(cls), &iter)
+                == KERN_SUCCESS
+            {
                 while case let service = IOIteratorNext(iter), service != 0 {
                     defer { IOObjectRelease(service) }
 
@@ -101,7 +110,8 @@ public final class TRMTransportWatcher: ObservableObject {
                     IORegistryEntryGetRegistryEntryID(service, &entryID)
 
                     func read(_ key: String) -> Any? {
-                        IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+                        IORegistryEntryCreateCFProperty(
+                            service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
                     }
 
                     var classBuf = [CChar](repeating: 0, count: 128)
@@ -109,14 +119,17 @@ public final class TRMTransportWatcher: ObservableObject {
                     let className = String(cString: classBuf)
                     let transportType = Self.transportType(from: className)
 
-                    if let t = makeTRMTransport(entryID: entryID, read: read, transportType: transportType),
-                       !rebuiltTransports.contains(where: { $0.id == t.id }) {
+                    if let t = makeTRMTransport(
+                        entryID: entryID, read: read, transportType: transportType),
+                        !rebuiltTransports.contains(where: { $0.id == t.id })
+                    {
                         rebuiltTransports.append(t)
                     }
 
                     if transportType == "CIO",
-                       let c = makeCIOCapability(entryID: entryID, read: read),
-                       !rebuiltCIO.contains(where: { $0.id == c.id }) {
+                        let c = makeCIOCapability(entryID: entryID, read: read),
+                        !rebuiltCIO.contains(where: { $0.id == c.id })
+                    {
                         rebuiltCIO.append(c)
                     }
                 }
@@ -141,7 +154,8 @@ public final class TRMTransportWatcher: ObservableObject {
             // typically when the service is being torn down mid-read. The
             // per-key call has no such failure path. See issue #181.
             func read(_ key: String) -> Any? {
-                IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+                IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                    .takeRetainedValue()
             }
 
             var classBuf = [CChar](repeating: 0, count: 128)
@@ -150,13 +164,15 @@ public final class TRMTransportWatcher: ObservableObject {
             let transportType = Self.transportType(from: className)
 
             if let t = makeTRMTransport(entryID: entryID, read: read, transportType: transportType),
-               !transports.contains(where: { $0.id == t.id }) {
+                !transports.contains(where: { $0.id == t.id })
+            {
                 transports.append(t)
             }
 
             if transportType == "CIO",
-               let c = makeCIOCapability(entryID: entryID, read: read),
-               !cioCapabilities.contains(where: { $0.id == c.id }) {
+                let c = makeCIOCapability(entryID: entryID, read: read),
+                !cioCapabilities.contains(where: { $0.id == c.id })
+            {
                 cioCapabilities.append(c)
             }
         }
@@ -172,7 +188,9 @@ public final class TRMTransportWatcher: ObservableObject {
         }
     }
 
-    private func makeTRMTransport(entryID: UInt64, read: (String) -> Any?, transportType: String) -> TRMTransport? {
+    private func makeTRMTransport(entryID: UInt64, read: (String) -> Any?, transportType: String)
+        -> TRMTransport?
+    {
         // Use TRM_State as the presence gate: it is the primary TRM field and
         // is always published when TRM data exists. This replaces the old
         // dict.keys.contains { $0.hasPrefix("TRM_") } check, which required
@@ -194,7 +212,8 @@ public final class TRMTransportWatcher: ObservableObject {
             stateDescription: read("TRM_StateDescription") as? String,
             transportRestricted: (read("TRM_TransportRestricted") as? NSNumber)?.boolValue,
             transportSupervised: (read("TRM_TransportSupervised") as? NSNumber)?.boolValue,
-            identificationRestricted: (read("TRM_IdentificationRestricted") as? NSNumber)?.boolValue,
+            identificationRestricted: (read("TRM_IdentificationRestricted") as? NSNumber)?
+                .boolValue,
             deviceLocked: (read("TRM_DeviceLocked") as? NSNumber)?.boolValue,
             relaxedPeriod: (read("TRM_RelaxedPeriod") as? NSNumber)?.boolValue,
             gracePeriodReason: (read("TRM_GracePeriodReason") as? NSNumber)?.intValue,
@@ -224,10 +243,12 @@ public final class TRMTransportWatcher: ObservableObject {
     /// Reads the parent port type and number from the service's properties.
     /// Same approach as `USB3TransportWatcher` and `PowerSourceWatcher`.
     nonisolated static func parentPortIdentity(read: (String) -> Any?) -> (type: Int, number: Int) {
-        let type = (read("ParentBuiltInPortType") as? NSNumber)?.intValue
+        let type =
+            (read("ParentBuiltInPortType") as? NSNumber)?.intValue
             ?? (read("ParentPortType") as? NSNumber)?.intValue
             ?? 0
-        let number = (read("ParentBuiltInPortNumber") as? NSNumber)?.intValue
+        let number =
+            (read("ParentBuiltInPortNumber") as? NSNumber)?.intValue
             ?? (read("ParentPortNumber") as? NSNumber)?.intValue
             ?? Int(((read("Priority") as? NSNumber)?.uint64Value ?? 0) & 0xFF)
         return (type, number)

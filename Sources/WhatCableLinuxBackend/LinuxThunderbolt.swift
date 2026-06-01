@@ -12,20 +12,27 @@ import WhatCableCore
 enum LinuxThunderbolt {
     static var root: String { "\(Sysfs.base)/bus/thunderbolt/devices" }
 
+    /// Enumerates Thunderbolt/USB4 router devices from sysfs and converts each discovered router into an `IOThunderboltSwitch`.
+    ///
+    /// The function scans the sysfs Thunderbolt devices directory, ignores retimers and domain entries, parses the router route from the directory name, and only includes routers that expose identity (`unique_id` or `device_name`). For each included router it populates identity and vendor/model fields, computes a route-based depth, and constructs an `IOThunderboltSwitch`.
+    /// - Returns: An array of `IOThunderboltSwitch` instances representing the discovered routers (empty if none found).
     static func read() -> [IOThunderboltSwitch] {
         var switches: [IOThunderboltSwitch] = []
         for name in Sysfs.list(root) {
             // Router directories are "<domain>-<route>". Skip retimers
             // ("0-0:1.1"), the domain nodes ("domain0"), and anything else.
             guard let dash = name.firstIndex(of: "-"),
-                  !name.contains(":"),
-                  !name.hasPrefix("domain") else { continue }
+                !name.contains(":"),
+                !name.hasPrefix("domain")
+            else { continue }
             let routeHex = String(name[name.index(after: dash)...])
             guard let route = Int64(routeHex, radix: 16) else { continue }
             let dir = "\(root)/\(name)"
 
             // A router only reports identity once authorized/!= a bare port.
-            guard Sysfs.exists("\(dir)/unique_id") || Sysfs.exists("\(dir)/device_name") else { continue }
+            guard Sysfs.exists("\(dir)/unique_id") || Sysfs.exists("\(dir)/device_name") else {
+                continue
+            }
 
             let generation = Sysfs.int("\(dir)/generation")
             switches.append(
@@ -51,8 +58,9 @@ enum LinuxThunderbolt {
         return switches
     }
 
-    /// Approximate hop count from the route string: each non-zero hex nibble
-    /// is one downstream hop. The host router (route 0) is depth 0.
+    /// Compute an approximate downstream hop count from a Thunderbolt route value.
+    /// - Parameter route: The route identifier where each hexadecimal 4-bit nibble represents a potential downstream hop; the value is interpreted as unsigned.
+    /// - Returns: The number of downstream hops inferred by counting non-zero 4-bit nibbles in the unsigned interpretation of `route`.
     private static func routeDepth(_ route: Int64) -> Int {
         var depth = 0
         var r = UInt64(bitPattern: route)

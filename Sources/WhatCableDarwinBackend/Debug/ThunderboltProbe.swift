@@ -11,7 +11,8 @@ public enum ThunderboltProbe {
     public static func dump() -> String {
         var output = ""
         output += "# WhatCable Thunderbolt probe\n"
-        output += "# whatcable \(AppInfo.version) on macOS \(ProcessInfo.processInfo.operatingSystemVersionString)\n"
+        output +=
+            "# whatcable \(AppInfo.version) on macOS \(ProcessInfo.processInfo.operatingSystemVersionString)\n"
         output += "# Generated \(ISO8601DateFormatter().string(from: Date()))\n"
         output += "\n"
 
@@ -28,7 +29,8 @@ public enum ThunderboltProbe {
             var iter: io_iterator_t = 0
             let kr = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter)
             guard kr == KERN_SUCCESS else {
-                output += "ERROR: IOServiceGetMatchingServices(\"\(matchClassName)\") returned \(kr)\n"
+                output +=
+                    "ERROR: IOServiceGetMatchingServices(\"\(matchClassName)\") returned \(kr)\n"
                 continue
             }
             defer { IOObjectRelease(iter) }

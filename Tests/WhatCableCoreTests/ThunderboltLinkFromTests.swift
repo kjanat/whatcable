@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WhatCableCore
 
 /// Covers `IOThunderboltSwitch.from(...)` and `IOThunderboltPort.from(...)` -
@@ -152,10 +153,10 @@ struct ThunderboltLinkFromTests {
         // hex-to-decimal conversions.
         #expect(AdapterType.from(rawValue: 917761) == .dpIn)
         #expect(AdapterType.from(rawValue: 917762) == .dpOut)
-        #expect(AdapterType.from(rawValue: 1048833) == .pcieDown)
-        #expect(AdapterType.from(rawValue: 1048834) == .pcieUp)
-        #expect(AdapterType.from(rawValue: 2097409) == .usb3Down)
-        #expect(AdapterType.from(rawValue: 2097410) == .usb3Up)
+        #expect(AdapterType.from(rawValue: 1_048_833) == .pcieDown)
+        #expect(AdapterType.from(rawValue: 1_048_834) == .pcieUp)
+        #expect(AdapterType.from(rawValue: 2_097_409) == .usb3Down)
+        #expect(AdapterType.from(rawValue: 2_097_410) == .usb3Up)
     }
 
     // MARK: - Steve's Samsung C34J79x downstream switch (TB3)
@@ -163,7 +164,7 @@ struct ThunderboltLinkFromTests {
     /// Switch #3 from issue #52 comment 1: Samsung C34J79x at Depth=1.
     private var samsungSwitch: [String: Any] {
         [
-            "UID": NSNumber(value: Int64(105094508797638400)),
+            "UID": NSNumber(value: Int64(105_094_508_797_638_400)),
             "Vendor ID": NSNumber(value: 32902),
             "Device Vendor ID": NSNumber(value: 373),
             "Device Vendor Name": "SAMSUNG ELECTRONICS CO.,LTD",
@@ -173,7 +174,7 @@ struct ThunderboltLinkFromTests {
             "Route String": NSNumber(value: 1),
             "Upstream Port Number": NSNumber(value: 3),
             "Max Port Number": NSNumber(value: 13),
-            "Supported Link Speed": NSNumber(value: 12)
+            "Supported Link Speed": NSNumber(value: 12),
         ]
     }
 
@@ -190,7 +191,7 @@ struct ThunderboltLinkFromTests {
             "Target Link Width": NSNumber(value: 3),
             "Supported Link Speed": NSNumber(value: 12),
             "Supported Link Width": NSNumber(value: 2),
-            "Link Bandwidth": NSNumber(value: 200)
+            "Link Bandwidth": NSNumber(value: 200),
         ]
     }
 
@@ -203,7 +204,7 @@ struct ThunderboltLinkFromTests {
             ports: []
         )
         #expect(model != nil)
-        #expect(model?.id == 105094508797638400)
+        #expect(model?.id == 105_094_508_797_638_400)
         #expect(model?.depth == 1)
         #expect(model?.routeString == 1)
         #expect(model?.modelName == "C34J79x")
@@ -234,7 +235,7 @@ struct ThunderboltLinkFromTests {
         [
             // ASUS UID is negative in IOKit (Int64 sign bit set). This is
             // exactly why the model uses Int64 rather than UInt64.
-            "UID": NSNumber(value: Int64(-9185256489162756864)),
+            "UID": NSNumber(value: Int64(-9_185_256_489_162_756_864)),
             "Vendor ID": NSNumber(value: 32903),
             "Device Vendor ID": NSNumber(value: 2821),
             "Device Vendor Name": "ASUS-Display",
@@ -244,7 +245,7 @@ struct ThunderboltLinkFromTests {
             "Route String": NSNumber(value: 1),
             "Upstream Port Number": NSNumber(value: 1),
             "Max Port Number": NSNumber(value: 19),
-            "Supported Link Speed": NSNumber(value: 12)
+            "Supported Link Speed": NSNumber(value: 12),
         ]
     }
 
@@ -258,7 +259,7 @@ struct ThunderboltLinkFromTests {
             "Current Link Width": NSNumber(value: 2),
             "Target Link Speed": NSNumber(value: 12),
             "Target Link Width": NSNumber(value: 3),
-            "Link Bandwidth": NSNumber(value: 400)
+            "Link Bandwidth": NSNumber(value: 400),
         ]
     }
 
@@ -266,7 +267,7 @@ struct ThunderboltLinkFromTests {
     /// ASUS port 3, then host port 1).
     private var ts3PlusSwitch: [String: Any] {
         [
-            "UID": NSNumber(value: Int64(17188550068006400)),
+            "UID": NSNumber(value: Int64(17_188_550_068_006_400)),
             "Vendor ID": NSNumber(value: 32902),
             "Device Vendor ID": NSNumber(value: 61),
             "Device Vendor Name": "CalDigit, Inc.",
@@ -276,7 +277,7 @@ struct ThunderboltLinkFromTests {
             "Route String": NSNumber(value: 769),
             "Upstream Port Number": NSNumber(value: 1),
             "Max Port Number": NSNumber(value: 11),
-            "Supported Link Speed": NSNumber(value: 12)
+            "Supported Link Speed": NSNumber(value: 12),
         ]
     }
 
@@ -289,7 +290,7 @@ struct ThunderboltLinkFromTests {
             "Current Link Width": NSNumber(value: 1),
             "Target Link Speed": NSNumber(value: 12),
             "Target Link Width": NSNumber(value: 1),
-            "Link Bandwidth": NSNumber(value: 100)
+            "Link Bandwidth": NSNumber(value: 100),
         ]
     }
 
@@ -340,7 +341,7 @@ struct ThunderboltLinkFromTests {
             className: "IOIOThunderboltSwitchIntelJHL8440",
             ports: []
         )
-        #expect(model?.id == -9185256489162756864)
+        #expect(model?.id == -9_185_256_489_162_756_864)
         #expect(model?.modelName == "PA32QCV")
     }
 
@@ -354,7 +355,7 @@ struct ThunderboltLinkFromTests {
             "Port Number": NSNumber(value: 1),
             "Socket ID": "1",
             "Current Link Speed": NSNumber(value: 0),
-            "Current Link Width": NSNumber(value: 0)
+            "Current Link Width": NSNumber(value: 0),
         ]
         let port = IOThunderboltPort.from(read: { dict[$0] })
         #expect(port?.currentSpeed == nil)
@@ -368,9 +369,9 @@ struct ThunderboltLinkFromTests {
         // The factory should not invent a generation just because the
         // dictionary happens to contain a Link Bandwidth value.
         let dict: [String: Any] = [
-            "Adapter Type": NSNumber(value: 1048833),  // PCIe down
+            "Adapter Type": NSNumber(value: 1_048_833),  // PCIe down
             "Port Number": NSNumber(value: 3),
-            "Link Bandwidth": NSNumber(value: 60)
+            "Link Bandwidth": NSNumber(value: 60),
         ]
         let port = IOThunderboltPort.from(read: { dict[$0] })
         #expect(port?.adapterType == .pcieDown)

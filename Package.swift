@@ -24,7 +24,7 @@ let package = Package(
         .executable(name: "WhatCable", targets: ["WhatCable"]),
         .executable(name: "whatcable-cli", targets: ["WhatCableCLI"]),
         .library(name: "WhatCableCore", targets: ["WhatCableCore"]),
-        .library(name: "WhatCableAppKit", targets: ["WhatCableAppKit"])
+        .library(name: "WhatCableAppKit", targets: ["WhatCableAppKit"]),
     ],
     targets: [
         .target(
@@ -49,13 +49,17 @@ let package = Package(
         ),
         .executableTarget(
             name: "WhatCable",
-            dependencies: ["WhatCableCore", "WhatCableDarwinBackend", "WhatCableAppKit", "WhatCablePlugins"],
+            dependencies: [
+                "WhatCableCore", "WhatCableDarwinBackend", "WhatCableAppKit", "WhatCablePlugins",
+            ],
             path: "Sources/WhatCable",
             resources: [.process("Resources")]
         ),
         .executableTarget(
             name: "WhatCableCLI",
-            dependencies: ["WhatCableCore", "WhatCableDarwinBackend", "WhatCableAppKit", "WhatCablePlugins"],
+            dependencies: [
+                "WhatCableCore", "WhatCableDarwinBackend", "WhatCableAppKit", "WhatCablePlugins",
+            ],
             path: "Sources/WhatCableCLI"
         ),
         .testTarget(
@@ -67,7 +71,7 @@ let package = Package(
             name: "WhatCableDarwinTests",
             dependencies: ["WhatCableCore", "WhatCable", "WhatCableDarwinBackend"],
             path: "Tests/WhatCableDarwinTests"
-        )
+        ),
     ]
 )
 
@@ -81,7 +85,7 @@ let package = Package(
         .executable(name: "whatcable-cli", targets: ["WhatCableCLI"]),
         .executable(name: "whatcable-gui", targets: ["WhatCableLinuxGUI"]),
         .library(name: "WhatCableCore", targets: ["WhatCableCore"]),
-        .library(name: "WhatCableLinuxBackend", targets: ["WhatCableLinuxBackend"])
+        .library(name: "WhatCableLinuxBackend", targets: ["WhatCableLinuxBackend"]),
     ],
     targets: [
         // libsqlite3 system-library shim. Requires the SQLite dev headers:
@@ -113,7 +117,7 @@ let package = Package(
             name: "WhatCableCoreTests",
             dependencies: ["WhatCableCore"],
             path: "Tests/WhatCableCoreTests"
-        )
+        ),
     ]
 )
 

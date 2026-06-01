@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("Cable Trust tier")
@@ -13,8 +14,9 @@ struct CableTrustTests {
 
     @Test("Data confirmation is green")
     func dataConfirmedIsGreen() {
-        let t = CableTrust(flags: [], vendorRegistered: false,
-                           dataConfirmed: true, powerConfirmed: false, contradiction: false)
+        let t = CableTrust(
+            flags: [], vendorRegistered: false,
+            dataConfirmed: true, powerConfirmed: false, contradiction: false)
         #expect(t.tier == .green)
         #expect(t.confirmedBy == [.data])
         #expect(t.isConfirmed)
@@ -22,24 +24,27 @@ struct CableTrustTests {
 
     @Test("Power confirmation is green")
     func powerConfirmedIsGreen() {
-        let t = CableTrust(flags: [], vendorRegistered: false,
-                           dataConfirmed: false, powerConfirmed: true, contradiction: false)
+        let t = CableTrust(
+            flags: [], vendorRegistered: false,
+            dataConfirmed: false, powerConfirmed: true, contradiction: false)
         #expect(t.tier == .green)
         #expect(t.confirmedBy == [.power])
     }
 
     @Test("Both axes confirmed")
     func bothConfirmed() {
-        let t = CableTrust(flags: [], vendorRegistered: true,
-                           dataConfirmed: true, powerConfirmed: true, contradiction: false)
+        let t = CableTrust(
+            flags: [], vendorRegistered: true,
+            dataConfirmed: true, powerConfirmed: true, contradiction: false)
         #expect(t.tier == .green)
         #expect(t.confirmedBy == [.data, .power])
     }
 
     @Test("Performance outranks pedigree: zeroed VID still green when confirmed")
     func confirmedDespiteZeroedVID() {
-        let t = CableTrust(flags: [Self.identityFlag], vendorRegistered: false,
-                           dataConfirmed: true, powerConfirmed: false, contradiction: false)
+        let t = CableTrust(
+            flags: [Self.identityFlag], vendorRegistered: false,
+            dataConfirmed: true, powerConfirmed: false, contradiction: false)
         #expect(t.tier == .green)
         #expect(t.confirmedBy == [.data])
     }
@@ -49,8 +54,9 @@ struct CableTrustTests {
     @Test("Registered vendor with a clean e-marker is amber until seen to perform")
     func registeredCleanIsAmber() {
         // Registration is not proof of delivery, so green requires behaviour.
-        let t = CableTrust(flags: [], vendorRegistered: true,
-                           dataConfirmed: false, powerConfirmed: false, contradiction: false)
+        let t = CableTrust(
+            flags: [], vendorRegistered: true,
+            dataConfirmed: false, powerConfirmed: false, contradiction: false)
         #expect(t.tier == .amber)
         #expect(t.confirmedBy.isEmpty)
         #expect(!t.isConfirmed)
@@ -58,8 +64,9 @@ struct CableTrustTests {
 
     @Test("Zeroed VID with no confirmation is amber")
     func zeroedVIDIsAmber() {
-        let t = CableTrust(flags: [Self.identityFlag], vendorRegistered: false,
-                           dataConfirmed: false, powerConfirmed: false, contradiction: false)
+        let t = CableTrust(
+            flags: [Self.identityFlag], vendorRegistered: false,
+            dataConfirmed: false, powerConfirmed: false, contradiction: false)
         #expect(t.tier == .amber)
     }
 
@@ -70,8 +77,9 @@ struct CableTrustTests {
         // The corpus disproof: spec-encoding quirks fire on genuine cables, so
         // they must not drive a damning tier. Carried as a note, tier stays
         // amber.
-        let t = CableTrust(flags: [Self.specFlag], vendorRegistered: true,
-                           dataConfirmed: false, powerConfirmed: false, contradiction: false)
+        let t = CableTrust(
+            flags: [Self.specFlag], vendorRegistered: true,
+            dataConfirmed: false, powerConfirmed: false, contradiction: false)
         #expect(t.tier == .amber)
         #expect(t.flags == [Self.specFlag])
     }
@@ -79,8 +87,9 @@ struct CableTrustTests {
     @Test("A confirmed cable with a spec flag is still green")
     func specFlagWithConfirmationIsGreen() {
         // Delivery outranks an untidy bit: the flag is a footnote, not a block.
-        let t = CableTrust(flags: [Self.specFlag], vendorRegistered: false,
-                           dataConfirmed: true, powerConfirmed: false, contradiction: false)
+        let t = CableTrust(
+            flags: [Self.specFlag], vendorRegistered: false,
+            dataConfirmed: true, powerConfirmed: false, contradiction: false)
         #expect(t.tier == .green)
         #expect(t.flags == [Self.specFlag])
     }
@@ -90,8 +99,9 @@ struct CableTrustTests {
         // Red is reserved for Phase 2 (behavioural, on session monitoring).
         for flags in [[], [Self.specFlag], [Self.identityFlag]] {
             for confirmed in [true, false] {
-                let t = CableTrust(flags: flags, vendorRegistered: false,
-                                   dataConfirmed: confirmed, powerConfirmed: false, contradiction: false)
+                let t = CableTrust(
+                    flags: flags, vendorRegistered: false,
+                    dataConfirmed: confirmed, powerConfirmed: false, contradiction: false)
                 #expect(t.tier != .red)
             }
         }
@@ -101,8 +111,9 @@ struct CableTrustTests {
 
     @Test("Contradiction suppresses confirmation, falls to amber")
     func contradictionSuppressesGreen() {
-        let t = CableTrust(flags: [], vendorRegistered: true,
-                           dataConfirmed: false, powerConfirmed: true, contradiction: true)
+        let t = CableTrust(
+            flags: [], vendorRegistered: true,
+            dataConfirmed: false, powerConfirmed: true, contradiction: true)
         #expect(t.confirmedBy.isEmpty)
         #expect(t.tier == .amber)
         #expect(t.contradiction)
@@ -112,10 +123,16 @@ struct CableTrustTests {
 
     @Test("cableLimit confirms; fine confirms only with a cable speed claim")
     func fineAndCableLimitConfirm() {
-        #expect(CableTrust.behaviour(for: .cableLimit(cableGbps: 10, capableGbps: 40),
-                                     hasCableSpeedClaim: true).dataConfirmed)
-        #expect(CableTrust.behaviour(for: .fine(activeGbps: 40),
-                                     hasCableSpeedClaim: true).dataConfirmed)
+        #expect(
+            CableTrust.behaviour(
+                for: .cableLimit(cableGbps: 10, capableGbps: 40),
+                hasCableSpeedClaim: true
+            ).dataConfirmed)
+        #expect(
+            CableTrust.behaviour(
+                for: .fine(activeGbps: 40),
+                hasCableSpeedClaim: true
+            ).dataConfirmed)
     }
 
     @Test("fine with no cable speed claim does NOT confirm (no false green)")
@@ -132,7 +149,7 @@ struct CableTrustTests {
             .deviceLimit(deviceGbps: 0.48),
             .degraded(activeGbps: 10, expectedGbps: 40),
             .unknownCable(activeGbps: 10),
-            nil
+            nil,
         ]
         for c in cases {
             let b = CableTrust.behaviour(for: c, hasCableSpeedClaim: true)
@@ -143,8 +160,9 @@ struct CableTrustTests {
 
     @Test("cableContradictsActive sets contradiction, not confirmation")
     func contradictionCase() {
-        let b = CableTrust.behaviour(for: .cableContradictsActive(cableGbps: 10, activeGbps: 40),
-                                     hasCableSpeedClaim: true)
+        let b = CableTrust.behaviour(
+            for: .cableContradictsActive(cableGbps: 10, activeGbps: 40),
+            hasCableSpeedClaim: true)
         #expect(!b.dataConfirmed)
         #expect(b.contradiction)
     }
@@ -155,14 +173,16 @@ struct CableTrustTests {
     func powerConfirmationLowerBound() {
         let clean = CableTrustReport(flags: [])
         // 100 W cable carrying a 100 W contract: confirmed -> green.
-        let full = CableTrust(report: clean, vendorRegistered: false,
-                              dataLink: nil, negotiatedWatts: 100, ratedWatts: 100)
+        let full = CableTrust(
+            report: clean, vendorRegistered: false,
+            dataLink: nil, negotiatedWatts: 100, ratedWatts: 100)
         #expect(full.tier == .green)
         #expect(full.confirmedBy == [.power])
 
         // 240 W cable carrying only 100 W: a lower bound, not confirmation.
-        let partial = CableTrust(report: clean, vendorRegistered: false,
-                                 dataLink: nil, negotiatedWatts: 100, ratedWatts: 240)
+        let partial = CableTrust(
+            report: clean, vendorRegistered: false,
+            dataLink: nil, negotiatedWatts: 100, ratedWatts: 240)
         #expect(partial.confirmedBy.isEmpty)
         #expect(partial.tier == .amber)
     }

@@ -70,9 +70,9 @@ public enum LinkGeneration: Hashable {
 /// controller can negotiate that generation. We keep this as a raw struct
 /// so future generations are representable without a model change.
 public struct SupportedSpeedMask: Hashable {
-    public let supportsTb3: Bool      // bit 0x8
+    public let supportsTb3: Bool  // bit 0x8
     public let supportsUsb4Tb4: Bool  // bit 0x4
-    public let supportsTb5: Bool      // bit 0x2
+    public let supportsTb5: Bool  // bit 0x2
     public let rawValue: UInt8
 
     public init(rawValue: UInt8) {
@@ -100,8 +100,8 @@ public struct SupportedSpeedMask: Hashable {
 /// (`enum tb_link_width`); preserve it as separate flags so a future TB5
 /// asymmetric link is representable without refactoring.
 public struct LinkWidth: Hashable {
-    public let single: Bool        // bit 0x1
-    public let dual: Bool          // bit 0x2
+    public let single: Bool  // bit 0x1
+    public let dual: Bool  // bit 0x2
     public let asymmetricTx: Bool  // bit 0x4 (3 TX / 1 RX)
     public let asymmetricRx: Bool  // bit 0x8 (1 TX / 3 RX)
     public let rawValue: UInt8
@@ -164,15 +164,15 @@ public enum TargetLinkWidth: Hashable {
 /// **local** router, not a global host-side / device-side label. In a
 /// daisy-chain, a middle switch has both.
 public enum AdapterType: Hashable {
-    case inactive       // 0x000000
-    case lane           // 0x000001 — physical TB port
-    case nhi            // 0x000002 — host interface (only on root switches)
-    case dpIn           // 0x0e0101
-    case dpOut          // 0x0e0102
-    case pcieDown       // 0x100101
-    case pcieUp         // 0x100102
-    case usb3Down       // 0x200101
-    case usb3Up         // 0x200102
+    case inactive  // 0x000000
+    case lane  // 0x000001 — physical TB port
+    case nhi  // 0x000002 — host interface (only on root switches)
+    case dpIn  // 0x0e0101
+    case dpOut  // 0x0e0102
+    case pcieDown  // 0x100101
+    case pcieUp  // 0x100102
+    case usb3Down  // 0x200101
+    case usb3Up  // 0x200102
     case other(UInt32)
 
     public static func from(rawValue: UInt32) -> AdapterType {
@@ -204,14 +204,14 @@ public enum AdapterType: Hashable {
 /// One Thunderbolt switch in the fabric. Could be a host root (Depth=0)
 /// or a downstream device's internal switch (Depth>0).
 public struct IOThunderboltSwitch: Identifiable, Hashable {
-    public let id: Int64                    // UID (signed Int64; can be negative)
-    public let className: String            // raw IOKit class
+    public let id: Int64  // UID (signed Int64; can be negative)
+    public let className: String  // raw IOKit class
     public let vendorID: Int
     public let vendorName: String
     public let modelName: String
-    public let routerID: Int                // 0 on the first host root
-    public let depth: Int                   // hops from host (0 = root)
-    public let routeString: Int64           // path encoding (one byte per hop)
+    public let routerID: Int  // 0 on the first host root
+    public let depth: Int  // hops from host (0 = root)
+    public let routeString: Int64  // path encoding (one byte per hop)
     public let upstreamPortNumber: Int
     public let maxPortNumber: Int
     public let supportedSpeed: SupportedSpeedMask
@@ -533,7 +533,8 @@ public struct IOThunderboltPort: Hashable {
             rawTargetSpeed: targetSpeedRaw,
             linkBandwidthRaw: (read("Link Bandwidth") as? NSNumber)?.intValue,
             maxBandwidthAllocated: (read("Maximum Bandwidth Allocated") as? NSNumber)?.intValue,
-            requiredBandwidthAllocated: (read("Required Bandwidth Allocated") as? NSNumber)?.intValue,
+            requiredBandwidthAllocated: (read("Required Bandwidth Allocated") as? NSNumber)?
+                .intValue,
             bufferAllocation: bufferAlloc,
             maxCredits: (read("Max Credits") as? NSNumber)?.intValue,
             dualLinkPort: (read("Dual-Link Port") as? NSNumber)?.intValue,

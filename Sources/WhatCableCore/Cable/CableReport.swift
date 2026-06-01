@@ -1,4 +1,5 @@
 import Foundation
+
 #if canImport(Darwin)
 import Darwin
 #elseif canImport(Glibc)
@@ -20,7 +21,10 @@ public enum CableReport {
         /// was active on this port when the report was created.
         public let cioCapability: CIOCableCapability?
 
-        public init(cable: CableFingerprint, system: SystemInfo?, appVersion: String, cioCapability: CIOCableCapability? = nil) {
+        public init(
+            cable: CableFingerprint, system: SystemInfo?, appVersion: String,
+            cioCapability: CIOCableCapability? = nil
+        ) {
             self.cable = cable
             self.system = system
             self.appVersion = appVersion
@@ -56,8 +60,11 @@ public enum CableReport {
             self.vendorIDHex = String(format: "0x%04X", identity.vendorID)
             self.productIDHex = String(format: "0x%04X", identity.productID)
             let vdo = identity.vdos.count > 3 ? identity.vdos[3] : 0
-            let curated = CableDB.curatedCables(vid: identity.vendorID, pid: identity.productID, cableVDO: vdo)
-            self.vendorName = VendorDB.name(for: identity.vendorID) ?? curated.first?.brand ?? "Unregistered / unknown"
+            let curated = CableDB.curatedCables(
+                vid: identity.vendorID, pid: identity.productID, cableVDO: vdo)
+            self.vendorName =
+                VendorDB.name(for: identity.vendorID) ?? curated.first?.brand
+                ?? "Unregistered / unknown"
             self.vdos = identity.vdos
             if let cs = identity.certStatVDO, cs.isPresent {
                 self.usbifCertID = cs.xid
@@ -77,7 +84,8 @@ public enum CableReport {
                 self.maxVolts = nil
                 self.maxWatts = nil
                 self.type = nil
-                self.hasEmarker = (identity.endpoint == .sopPrime || identity.endpoint == .sopDoublePrime)
+                self.hasEmarker =
+                    (identity.endpoint == .sopPrime || identity.endpoint == .sopDoublePrime)
             }
         }
     }
@@ -91,10 +99,14 @@ public enum CableReport {
             self.macOSVersion = macOSVersion
         }
 
+        /// Constructs a `SystemInfo` populated with the current machine model and operating system version.
+        /// - Returns: A `SystemInfo` whose `macModel` is the current machine model and whose `macOSVersion` is the current operating system version.
         public static func current() -> SystemInfo {
             SystemInfo(macModel: fetchMacModel(), macOSVersion: fetchOSVersion())
         }
 
+        /// Retrieve the host machine model identifier.
+        /// - Returns: The machine model string (for example "MacBookPro15,1" or a DMI product name). Returns `"unknown"` when the model cannot be determined on Darwin, or `"Linux"` when no DMI model is available on non-Darwin platforms.
         private static func fetchMacModel() -> String {
             #if canImport(Darwin)
             var size = 0
@@ -106,8 +118,10 @@ public enum CableReport {
             #else
             // Linux has no `hw.model`; report the DMI product name when the
             // kernel exposes it, otherwise fall back to a generic label.
-            for path in ["/sys/class/dmi/id/product_name",
-                         "/sys/firmware/devicetree/base/model"] {
+            for path in [
+                "/sys/class/dmi/id/product_name",
+                "/sys/firmware/devicetree/base/model",
+            ] {
                 if let raw = try? String(contentsOfFile: path, encoding: .utf8) {
                     let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
                         .replacingOccurrences(of: "\u{0}", with: "")
@@ -118,6 +132,8 @@ public enum CableReport {
             #endif
         }
 
+        /// Formats the current operating system version as "major.minor.patch".
+        /// - Returns: A string containing the OS version formatted as `"<major>.<minor>.<patch>"`.
         private static func fetchOSVersion() -> String {
             let v = ProcessInfo.processInfo.operatingSystemVersion
             return "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
@@ -143,7 +159,8 @@ public enum CableReport {
     }
 
     /// Issue endpoint the report is filed against.
-    public static let issueBaseURL = URL(string: "https://github.com/darrylmorley/whatcable/issues/new")!
+    public static let issueBaseURL = URL(
+        string: "https://github.com/darrylmorley/whatcable/issues/new")!
 
     /// Map a VDO array index to its role per the USB-PD spec layout for a
     /// passive / active cable Discover Identity response. Anything past the
@@ -210,11 +227,15 @@ extension CableReport.Payload {
             lines.append("")
         }
         if let cio = cioCapability,
-           cio.cableGeneration != nil || cio.cableSpeed != nil || cio.generation != nil
-            || cio.asymmetricModeSupported != nil || cio.legacyAdapter != nil || cio.linkTrainingMode != nil {
+            cio.cableGeneration != nil || cio.cableSpeed != nil || cio.generation != nil
+                || cio.asymmetricModeSupported != nil || cio.legacyAdapter != nil
+                || cio.linkTrainingMode != nil
+        {
             lines.append("### Thunderbolt link context")
             lines.append("")
-            lines.append("These values come from the Thunderbolt controller (`IOPortTransportStateCIO`), not the cable's e-marker.")
+            lines.append(
+                "These values come from the Thunderbolt controller (`IOPortTransportStateCIO`), not the cable's e-marker."
+            )
             lines.append("")
             lines.append("| Field | Value |")
             lines.append("|---|---|")
@@ -261,12 +282,13 @@ extension CableReport.Payload {
     /// Pre-filled GitHub issue URL. Targets the cable-report template and
     /// drops the fingerprint markdown into the form's `fingerprint` field.
     public var githubURL: URL {
-        var components = URLComponents(url: CableReport.issueBaseURL, resolvingAgainstBaseURL: false)!
+        var components = URLComponents(
+            url: CableReport.issueBaseURL, resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "template", value: "cable-report.yml"),
             URLQueryItem(name: "labels", value: "cable-report"),
             URLQueryItem(name: "title", value: issueTitle),
-            URLQueryItem(name: "fingerprint", value: markdown)
+            URLQueryItem(name: "fingerprint", value: markdown),
         ]
         return components.url ?? CableReport.issueBaseURL
     }

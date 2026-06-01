@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 /// Unit tests for USBCPinMap model.
@@ -49,8 +50,8 @@ struct USBCPinMapTests {
         #expect(map.bottomRow[2].signal == .usb3PairA)  // B10
 
         // Everything else on data pins should be inactive
-        #expect(map.topRow[9].signal == .inactive)   // A10 (rx2)
-        #expect(map.bottomRow[10].signal == .inactive) // B2 (tx2)
+        #expect(map.topRow[9].signal == .inactive)  // A10 (rx2)
+        #expect(map.bottomRow[10].signal == .inactive)  // B2 (tx2)
     }
 
     @Test("USB3 pair A signal summary")
@@ -69,10 +70,10 @@ struct USBCPinMapTests {
 
         // tx2 drives B2/B3
         #expect(map.bottomRow[10].signal == .usb3PairB)  // B2
-        #expect(map.bottomRow[9].signal == .usb3PairB)   // B3
+        #expect(map.bottomRow[9].signal == .usb3PairB)  // B3
 
         // rx2 drives A10/A11
-        #expect(map.topRow[9].signal == .usb3PairB)   // A10
+        #expect(map.topRow[9].signal == .usb3PairB)  // A10
         #expect(map.topRow[10].signal == .usb3PairB)  // A11
     }
 
@@ -101,8 +102,8 @@ struct USBCPinMapTests {
         #expect(map.topRow[10].signal == .dpLane(3))
 
         // SBU pins carry DP AUX
-        #expect(map.topRow[7].signal == .dpAux)     // A8 (sbu1)
-        #expect(map.bottomRow[4].signal == .dpAux)   // B8 (sbu2)
+        #expect(map.topRow[7].signal == .dpAux)  // A8 (sbu1)
+        #expect(map.bottomRow[4].signal == .dpAux)  // B8 (sbu2)
     }
 
     @Test("Four lane DP signal summary")
@@ -118,26 +119,26 @@ struct USBCPinMapTests {
         let map = USBCPinMap.from(pinConfiguration: allZeros)!
 
         // Ground pins
-        #expect(map.topRow[0].signal == .ground)     // A1
-        #expect(map.topRow[11].signal == .ground)    // A12
+        #expect(map.topRow[0].signal == .ground)  // A1
+        #expect(map.topRow[11].signal == .ground)  // A12
         #expect(map.bottomRow[0].signal == .ground)  // B12
-        #expect(map.bottomRow[11].signal == .ground) // B1
+        #expect(map.bottomRow[11].signal == .ground)  // B1
 
         // VBUS pins
-        #expect(map.topRow[3].signal == .vbus)       // A4
-        #expect(map.topRow[8].signal == .vbus)       // A9
-        #expect(map.bottomRow[3].signal == .vbus)    // B9
-        #expect(map.bottomRow[8].signal == .vbus)    // B4
+        #expect(map.topRow[3].signal == .vbus)  // A4
+        #expect(map.topRow[8].signal == .vbus)  // A9
+        #expect(map.bottomRow[3].signal == .vbus)  // B9
+        #expect(map.bottomRow[8].signal == .vbus)  // B4
 
         // CC pins
-        #expect(map.topRow[4].signal == .cc)         // A5
-        #expect(map.bottomRow[7].signal == .cc)      // B5
+        #expect(map.topRow[4].signal == .cc)  // A5
+        #expect(map.bottomRow[7].signal == .cc)  // B5
 
         // USB 2.0 pins
-        #expect(map.topRow[5].signal == .usb2)       // A6
-        #expect(map.topRow[6].signal == .usb2)       // A7
-        #expect(map.bottomRow[5].signal == .usb2)    // B7
-        #expect(map.bottomRow[6].signal == .usb2)    // B6
+        #expect(map.topRow[5].signal == .usb2)  // A6
+        #expect(map.topRow[6].signal == .usb2)  // A7
+        #expect(map.bottomRow[5].signal == .usb2)  // B7
+        #expect(map.bottomRow[6].signal == .usb2)  // B6
     }
 
     @Test("Static pins are not dynamic")
@@ -149,8 +150,8 @@ struct USBCPinMapTests {
         #expect(!USBCPinMap.Signal.usb2.isDynamic)
         #expect(!USBCPinMap.Signal.inactive.isDynamic)
         // Confirm no static pin is flagged as dynamic
-        #expect(!map.topRow[0].signal.isDynamic)   // GND
-        #expect(!map.topRow[3].signal.isDynamic)   // VBUS
+        #expect(!map.topRow[0].signal.isDynamic)  // GND
+        #expect(!map.topRow[3].signal.isDynamic)  // VBUS
     }
 
     // MARK: - Pin IDs and row sizes
@@ -167,7 +168,7 @@ struct USBCPinMapTests {
     func topRowPinIDs() {
         let map = USBCPinMap.from(pinConfiguration: allZeros)!
         let ids = map.topRow.map(\.id)
-        #expect(ids == ["A1","A2","A3","A4","A5","A6","A7","A8","A9","A10","A11","A12"])
+        #expect(ids == ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11", "A12"])
     }
 
     @Test("Bottom row pin IDs")
@@ -175,7 +176,7 @@ struct USBCPinMapTests {
         let map = USBCPinMap.from(pinConfiguration: allZeros)!
         let ids = map.bottomRow.map(\.id)
         // Reversed: B12 down to B1 for visual layout
-        #expect(ids == ["B12","B11","B10","B9","B8","B7","B6","B5","B4","B3","B2","B1"])
+        #expect(ids == ["B12", "B11", "B10", "B9", "B8", "B7", "B6", "B5", "B4", "B3", "B2", "B1"])
     }
 
     // MARK: - Orientation

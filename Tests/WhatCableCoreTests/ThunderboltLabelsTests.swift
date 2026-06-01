@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 /// Tests for the user-facing label helpers and topology walker.
@@ -97,10 +98,13 @@ struct ThunderboltLabelsTests {
 
     @Test("Chain single hop")
     func chainSingleHop() {
-        let host = makeSwitch(uid: 100, depth: 0, parent: nil, ports: [
-            makeLanePort(portNumber: 1, socketID: "1", speed: .usb4Tb4, widthRaw: 0x2)
-        ])
-        let device = makeSwitch(uid: 200, depth: 1, parent: 100, vendor: "ASUS-Display", model: "PA32QCV")
+        let host = makeSwitch(
+            uid: 100, depth: 0, parent: nil,
+            ports: [
+                makeLanePort(portNumber: 1, socketID: "1", speed: .usb4Tb4, widthRaw: 0x2)
+            ])
+        let device = makeSwitch(
+            uid: 200, depth: 1, parent: 100, vendor: "ASUS-Display", model: "PA32QCV")
         let chain = ThunderboltTopology.chain(from: host, in: [host, device])
         #expect(chain.count == 2)
         #expect(chain.first?.id == 100)
@@ -110,8 +114,10 @@ struct ThunderboltLabelsTests {
     @Test("Chain daisy two hops")
     func chainDaisyTwoHops() {
         let host = makeSwitch(uid: 100, depth: 0, parent: nil, ports: [])
-        let asus = makeSwitch(uid: 200, depth: 1, parent: 100, vendor: "ASUS-Display", model: "PA32QCV")
-        let ts3 = makeSwitch(uid: 300, depth: 2, parent: 200, vendor: "CalDigit, Inc.", model: "TS3 Plus")
+        let asus = makeSwitch(
+            uid: 200, depth: 1, parent: 100, vendor: "ASUS-Display", model: "PA32QCV")
+        let ts3 = makeSwitch(
+            uid: 300, depth: 2, parent: 200, vendor: "CalDigit, Inc.", model: "TS3 Plus")
         let chain = ThunderboltTopology.chain(from: host, in: [host, asus, ts3])
         #expect(chain.map(\.id) == [100, 200, 300])
     }

@@ -1,11 +1,11 @@
-import SwiftUI
 import AppKit
 import Combine
-import os.log
+import SwiftUI
+import WhatCableAppKit
 import WhatCableCore
 import WhatCableDarwinBackend
-import WhatCableAppKit
 import WhatCablePlugins
+import os.log
 
 // Launch diagnostics use `.notice`, not `.info`, on purpose. `log stream`
 // and `log show` hide info/debug unless you pass `--level info`, so the
@@ -33,7 +33,8 @@ struct WhatCableApp: App {
         Settings { EmptyView() }
             .commands {
                 CommandGroup(replacing: .appInfo) {
-                    Button(String(localized: "About \(AppInfo.name)", bundle: _appLocalizedBundle)) {
+                    Button(String(localized: "About \(AppInfo.name)", bundle: _appLocalizedBundle))
+                    {
                         delegate.showAboutPanel()
                     }
                 }
@@ -91,7 +92,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     private var cancellables: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        log.notice("launch: version=\(AppInfo.version, privacy: .public) macOS=\(ProcessInfo.processInfo.operatingSystemVersionString, privacy: .public)")
+        log.notice(
+            "launch: version=\(AppInfo.version, privacy: .public) macOS=\(ProcessInfo.processInfo.operatingSystemVersionString, privacy: .public)"
+        )
         registerWidgetExtension()
         NSWindow.allowsAutomaticWindowTabbing = false
 
@@ -241,15 +244,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         if statusItem == nil {
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             if let button = item.button {
-                button.image = NSImage(systemSymbolName: "cable.connector", accessibilityDescription: AppInfo.name)
+                button.image = NSImage(
+                    systemSymbolName: "cable.connector", accessibilityDescription: AppInfo.name)
                 if button.image == nil {
-                    log.warning("menuBar: cable.connector SF Symbol returned nil, using text fallback")
+                    log.warning(
+                        "menuBar: cable.connector SF Symbol returned nil, using text fallback")
                     button.title = "WC"
                 }
                 button.target = self
                 button.action = #selector(handleClick(_:))
                 button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-                log.notice("menuBar: statusItem button configured, hasImage=\(button.image != nil), frame=\(button.frame.debugDescription, privacy: .public)")
+                log.notice(
+                    "menuBar: statusItem button configured, hasImage=\(button.image != nil), frame=\(button.frame.debugDescription, privacy: .public)"
+                )
             } else {
                 log.error("menuBar: statusItem.button is nil, removing broken item")
                 NSStatusBar.system.removeStatusItem(item)
@@ -325,16 +332,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     private func showMenu(from button: NSStatusBarButton) {
         guard let statusItem else { return }
         let menu = NSMenu()
-        menu.addItem(.init(title: String(localized: "Refresh", bundle: _appLocalizedBundle), action: #selector(menuRefresh), keyEquivalent: "r"))
-        let pinItem = NSMenuItem(title: String(localized: "Keep window open", bundle: _appLocalizedBundle), action: #selector(menuTogglePin), keyEquivalent: "p")
+        menu.addItem(
+            .init(
+                title: String(localized: "Refresh", bundle: _appLocalizedBundle),
+                action: #selector(menuRefresh), keyEquivalent: "r"))
+        let pinItem = NSMenuItem(
+            title: String(localized: "Keep window open", bundle: _appLocalizedBundle),
+            action: #selector(menuTogglePin), keyEquivalent: "p")
         pinItem.state = Self.refreshSignal.keepOpen ? .on : .off
         menu.addItem(pinItem)
         menu.addItem(.separator())
-        menu.addItem(.init(title: String(localized: "Settings…", bundle: _appLocalizedBundle), action: #selector(menuSettings), keyEquivalent: ","))
+        menu.addItem(
+            .init(
+                title: String(localized: "Settings…", bundle: _appLocalizedBundle),
+                action: #selector(menuSettings), keyEquivalent: ","))
         for builder in PluginRegistry.shared.nsMenuItemBuilders[.statusItemMenu] ?? [] {
             menu.addItem(builder())
         }
-        menu.addItem(.init(title: String(localized: "Check for Updates…", bundle: _appLocalizedBundle), action: #selector(menuCheckUpdates), keyEquivalent: ""))
+        menu.addItem(
+            .init(
+                title: String(localized: "Check for Updates…", bundle: _appLocalizedBundle),
+                action: #selector(menuCheckUpdates), keyEquivalent: ""))
         let testKitItem = NSMenuItem(
             title: String(localized: "Contribute Diagnostic Data…", bundle: _appLocalizedBundle),
             action: #selector(menuRunTestKit),
@@ -345,10 +363,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         }
         menu.addItem(testKitItem)
         menu.addItem(.separator())
-        menu.addItem(.init(title: String(localized: "About \(AppInfo.name)", bundle: _appLocalizedBundle), action: #selector(showAboutPanel), keyEquivalent: ""))
-        menu.addItem(.init(title: String(localized: "WhatCable on GitHub", bundle: _appLocalizedBundle), action: #selector(menuHelp), keyEquivalent: ""))
+        menu.addItem(
+            .init(
+                title: String(localized: "About \(AppInfo.name)", bundle: _appLocalizedBundle),
+                action: #selector(showAboutPanel), keyEquivalent: ""))
+        menu.addItem(
+            .init(
+                title: String(localized: "WhatCable on GitHub", bundle: _appLocalizedBundle),
+                action: #selector(menuHelp), keyEquivalent: ""))
         menu.addItem(.separator())
-        menu.addItem(.init(title: String(localized: "Quit \(AppInfo.name)", bundle: _appLocalizedBundle), action: #selector(menuQuit), keyEquivalent: "q"))
+        menu.addItem(
+            .init(
+                title: String(localized: "Quit \(AppInfo.name)", bundle: _appLocalizedBundle),
+                action: #selector(menuQuit), keyEquivalent: "q"))
         for item in menu.items where item.action != nil && item.target == nil { item.target = self }
 
         statusItem.menu = menu
@@ -373,7 +400,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         showSettings()
     }
 
-
     private func showSettings() {
         NSApp.activate()
         Self.refreshSignal.showSettings = true
@@ -396,7 +422,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             string: "\(AppInfo.tagline)\n\n\(AppInfo.credit)",
             attributes: [
                 .foregroundColor: NSColor.labelColor,
-                .font: NSFont.systemFont(ofSize: 11)
+                .font: NSFont.systemFont(ofSize: 11),
             ]
         )
         NSApp.orderFrontStandardAboutPanel(options: [
@@ -404,10 +430,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             .applicationVersion: AppInfo.version,
             .version: "",
             .credits: credits,
-            .init(rawValue: "Copyright"): AppInfo.copyright
+            .init(rawValue: "Copyright"): AppInfo.copyright,
         ])
     }
-
 
     @objc private func menuRunTestKit() {
         showSettings()
@@ -436,8 +461,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     /// them, leaving "Final plugin count: 0" and no widget in the gallery.
     /// Explicitly adding the appex bypasses the stale-entry collision.
     private func registerWidgetExtension() {
-        guard let appexURL = Bundle.main.builtInPlugInsURL?
-            .appendingPathComponent("WhatCableWidget.appex") else { return }
+        guard
+            let appexURL = Bundle.main.builtInPlugInsURL?
+                .appendingPathComponent("WhatCableWidget.appex")
+        else { return }
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/pluginkit")
         task.arguments = ["-a", appexURL.path]
@@ -452,7 +479,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
                 log.warning("launch: pluginkit -a exited with status \(task.terminationStatus)")
             }
         } catch {
-            log.warning("launch: pluginkit -a failed: \(error.localizedDescription, privacy: .public)")
+            log.warning(
+                "launch: pluginkit -a failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -466,4 +494,3 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         }
     }
 }
-

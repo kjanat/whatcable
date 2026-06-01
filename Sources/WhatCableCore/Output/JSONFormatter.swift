@@ -157,7 +157,8 @@ private struct PortDTO: Codable {
 
         // Resolve the host-root switch UID via Socket ID matching.
         if let socketID = ThunderboltTopology.socketID(for: port),
-           let root = ThunderboltTopology.hostRoot(forSocketID: socketID, in: thunderboltSwitches) {
+            let root = ThunderboltTopology.hostRoot(forSocketID: socketID, in: thunderboltSwitches)
+        {
             self.thunderboltSwitchUID = root.id
         } else {
             self.thunderboltSwitchUID = nil
@@ -190,7 +191,8 @@ private struct PortDTO: Codable {
             usb3Speed: usb3Speed
         )
 
-        self.powerSources = port.connectionActive != false ? sources.map { PowerSourceDTO(source: $0) } : []
+        self.powerSources =
+            port.connectionActive != false ? sources.map { PowerSourceDTO(source: $0) } : []
 
         let cableEmarker = identities.first {
             $0.endpoint == .sopPrime || $0.endpoint == .sopDoublePrime
@@ -200,8 +202,11 @@ private struct PortDTO: Codable {
         let partner = identities.first { $0.endpoint == .sop }
         self.device = partner.map { DeviceDTO(identity: $0) }
 
-        self.charging = ChargingDiagnostic(port: port, sources: sources, identities: identities, adapter: adapter, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged)
-            .map { ChargingDTO(diagnostic: $0) }
+        self.charging = ChargingDiagnostic(
+            port: port, sources: sources, identities: identities, adapter: adapter,
+            wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged
+        )
+        .map { ChargingDTO(diagnostic: $0) }
 
         let dataLinkDiag = DataLinkDiagnostic(
             port: port,
@@ -218,26 +223,30 @@ private struct PortDTO: Codable {
         // contract). Only when there's a cable e-marker to assess. The
         // negotiated wattage is the highest winning contract across sources,
         // matching how ChargingDiagnostic reads the live contract.
-        let negotiatedWatts: Int? = sources
+        let negotiatedWatts: Int? =
+            sources
             .compactMap { $0.winning.map { Int((Double($0.maxPowerMW) / 1000).rounded()) } }
             .max()
         self.trust = cableEmarker.map { id in
-            TrustDTO(trust: CableTrust(
-                report: CableTrustReport(identity: id),
-                vendorRegistered: VendorDB.isRegistered(id.vendorID),
-                dataLink: dataLinkDiag,
-                negotiatedWatts: negotiatedWatts,
-                ratedWatts: id.cableVDO?.maxWatts
-            ))
+            TrustDTO(
+                trust: CableTrust(
+                    report: CableTrustReport(identity: id),
+                    vendorRegistered: VendorDB.isRegistered(id.vendorID),
+                    dataLink: dataLinkDiag,
+                    negotiatedWatts: negotiatedWatts,
+                    ratedWatts: id.cableVDO?.maxWatts
+                ))
         }
 
-        self.display = displayPort
+        self.display =
+            displayPort
             .flatMap { DisplayDiagnostic(dp: $0, cable: cableEmarker) }
             .map { DisplayDTO(diagnostic: $0) }
 
         self.billboardDevicePresent = port.hasBillboardDevice(among: usbDevices)
 
-        self.trm = trmTransports.isEmpty ? nil : trmTransports.map { TRMTransportDTO(transport: $0) }
+        self.trm =
+            trmTransports.isEmpty ? nil : trmTransports.map { TRMTransportDTO(transport: $0) }
         self.cio = cioCapability.map { CIOCableCapabilityDTO(capability: $0) }
 
         let tree = USBDeviceNode.buildTree(from: usbDevices)
@@ -682,9 +691,12 @@ private struct AdapterDTO: Codable {
         self.description = adapter.adapterDescription
         self.powerTier = adapter.powerTier
         self.isWireless = adapter.isWireless
-        self.hvcMenu = adapter.hvcMenu.isEmpty ? nil : adapter.hvcMenu.map {
-            AdapterHVCEntryDTO(voltageMV: $0.voltageMV, currentMA: $0.currentMA)
-        }
+        self.hvcMenu =
+            adapter.hvcMenu.isEmpty
+            ? nil
+            : adapter.hvcMenu.map {
+                AdapterHVCEntryDTO(voltageMV: $0.voltageMV, currentMA: $0.currentMA)
+            }
         self.manufacturer = adapter.manufacturer
         self.name = adapter.name
         self.model = adapter.model

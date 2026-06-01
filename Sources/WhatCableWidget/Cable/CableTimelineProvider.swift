@@ -1,8 +1,8 @@
-import Foundation
-import WidgetKit
 import AppIntents
-import os.log
+import Foundation
 import WhatCableCore
+import WidgetKit
+import os.log
 
 struct CableTimelineProvider: AppIntentTimelineProvider {
     private let staleAfter: TimeInterval = 5 * 60
@@ -17,14 +17,18 @@ struct CableTimelineProvider: AppIntentTimelineProvider {
         CableWidgetEntry.placeholder
     }
 
-    func snapshot(for configuration: CableWidgetIntent, in context: Context) async -> CableWidgetEntry {
+    func snapshot(for configuration: CableWidgetIntent, in context: Context) async
+        -> CableWidgetEntry
+    {
         if context.isPreview {
             return .placeholder
         }
         return currentEntry(for: configuration)
     }
 
-    func timeline(for configuration: CableWidgetIntent, in context: Context) async -> Timeline<CableWidgetEntry> {
+    func timeline(for configuration: CableWidgetIntent, in context: Context) async -> Timeline<
+        CableWidgetEntry
+    > {
         let entry = currentEntry(for: configuration)
         return Timeline(
             entries: [entry],
@@ -36,7 +40,9 @@ struct CableTimelineProvider: AppIntentTimelineProvider {
 
     private func currentEntry(for configuration: CableWidgetIntent) -> CableWidgetEntry {
         guard let url = WidgetSnapshot.sharedFileURL else {
-            log.error("Failed to resolve App Group container URL for \(WidgetSnapshot.appGroupID, privacy: .public)")
+            log.error(
+                "Failed to resolve App Group container URL for \(WidgetSnapshot.appGroupID, privacy: .public)"
+            )
             return CableWidgetEntry(date: Date(), snapshot: nil, configuration: configuration)
         }
 
@@ -44,7 +50,8 @@ struct CableTimelineProvider: AppIntentTimelineProvider {
         do {
             data = try Data(contentsOf: url)
         } catch {
-            log.error("Failed to read widget snapshot: \(error.localizedDescription, privacy: .public)")
+            log.error(
+                "Failed to read widget snapshot: \(error.localizedDescription, privacy: .public)")
             return CableWidgetEntry(date: Date(), snapshot: nil, configuration: configuration)
         }
 
@@ -52,7 +59,9 @@ struct CableTimelineProvider: AppIntentTimelineProvider {
         do {
             snapshot = try JSONDecoder().decode(WidgetSnapshot.self, from: data)
         } catch {
-            log.error("Failed to decode widget snapshot (\(data.count) bytes): \(error.localizedDescription, privacy: .public)")
+            log.error(
+                "Failed to decode widget snapshot (\(data.count) bytes): \(error.localizedDescription, privacy: .public)"
+            )
             return CableWidgetEntry(date: Date(), snapshot: nil, configuration: configuration)
         }
 
@@ -62,7 +71,8 @@ struct CableTimelineProvider: AppIntentTimelineProvider {
             return CableWidgetEntry(date: Date(), snapshot: nil, configuration: configuration)
         }
 
-        return CableWidgetEntry(date: snapshot.timestamp, snapshot: snapshot, configuration: configuration)
+        return CableWidgetEntry(
+            date: snapshot.timestamp, snapshot: snapshot, configuration: configuration)
     }
 }
 

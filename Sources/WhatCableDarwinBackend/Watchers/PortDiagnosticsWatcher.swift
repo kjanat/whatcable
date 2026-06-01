@@ -74,7 +74,9 @@ public final class PortDiagnosticsWatcher: ObservableObject {
     }
 
     public func refresh() {
-        guard let dict = PowerTelemetryWatcher.appleSmartBatteryPropertiesForDiagnostics() else { return }
+        guard let dict = PowerTelemetryWatcher.appleSmartBatteryPropertiesForDiagnostics() else {
+            return
+        }
         let entries = wcArray(dict["PortControllerInfo"]).map(wcDictionary)
         var counters: [String: PortHealthCounters] = [:]
         var contracts: [String: PDContract] = [:]
@@ -100,7 +102,8 @@ public final class PortDiagnosticsWatcher: ObservableObject {
     private static func contract(from dict: [String: Any]) -> PDContract {
         let rawPDOs = wcArray(dict["PortControllerPortPDO"]).map(wcUInt32)
         let pdoCount = wcInt(dict["PortControllerNPDOs"])
-        let decoded = rawPDOs.prefix(pdoCount > 0 ? pdoCount : rawPDOs.count).map(PDO.decode(rawValue:))
+        let decoded = rawPDOs.prefix(pdoCount > 0 ? pdoCount : rawPDOs.count).map(
+            PDO.decode(rawValue:))
         return PDContract(
             activeRdo: wcUInt32(dict["PortControllerActiveContractRdo"]),
             pdoList: decoded,
@@ -131,7 +134,9 @@ public final class PortDiagnosticsWatcher: ObservableObject {
     }
 
     private static func eventTrace(from dict: [String: Any]) -> PDEventTrace {
-        let raw = wcData(dict["PortControllerEvtBuffer"]) ?? Data(wcArray(dict["PortControllerEvtBuffer"]).map(wcUInt8))
+        let raw =
+            wcData(dict["PortControllerEvtBuffer"])
+            ?? Data(wcArray(dict["PortControllerEvtBuffer"]).map(wcUInt8))
         let filtered = raw.filter { $0 != 0x00 }
         let events = filtered.map(PDEvent.init(rawValue:))
         return PDEventTrace(rawBuffer: filtered, events: events)

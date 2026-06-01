@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "lineLength": 100,
+  "indentation": {
+    "spaces": 4
+  },
+  "tabWidth": 4,
+  "maximumBlankLines": 1,
+  "respectsExistingLineBreaks": true,
+  "lineBreakBeforeEachArgument": false,
+  "lineBreakBeforeEachGenericRequirement": false,
+  "prioritizeKeepingFunctionOutputTogether": false,
+  "indentConditionalCompilationBlocks": false,
+  "lineBreakAroundMultilineExpressionChainComponents": false,
+  "indentSwitchCaseLabels": false
+}

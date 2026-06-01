@@ -9,7 +9,8 @@ public func setCoreLocale(_ identifier: String) {
     if identifier.isEmpty {
         _coreLocalizedBundle = .module
     } else if let url = Bundle.module.url(forResource: identifier, withExtension: "lproj"),
-              let b = Bundle(url: url) {
+        let b = Bundle(url: url)
+    {
         _coreLocalizedBundle = b
     } else {
         _coreLocalizedBundle = .module

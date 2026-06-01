@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("PD VDO Decoding")
@@ -24,7 +25,7 @@ struct PDVDOTests {
     func decodeActiveCableIDHeader() {
         // ufpProductType = 4 (active cable) -> bits 29..27 = 100
         // 4 << 27 = 0x2000_0000
-        let vdo: UInt32 = 0x2000_0000 | 0x05AC // Apple vendor
+        let vdo: UInt32 = 0x2000_0000 | 0x05AC  // Apple vendor
         let header = PDVDO.decodeIDHeader(vdo)
         #expect(header.ufpProductType == .activeCable)
         #expect(header.vendorID == 0x05AC)
@@ -63,7 +64,7 @@ struct PDVDOTests {
         #expect(cable.vbusThroughCable)
         #expect(cable.maxVoltageEncoded == 0)
         #expect(cable.maxVolts == 20)
-        #expect(cable.maxWatts == 100) // 20V * 5A
+        #expect(cable.maxWatts == 100)  // 20V * 5A
         #expect(cable.cableType == .passive)
         #expect(cable.decodeWarnings.isEmpty)
     }
@@ -75,7 +76,7 @@ struct PDVDOTests {
         let cable = PDVDO.decodeCableVDO(vdo, isActive: false)
         #expect(cable.speed == .usb20)
         #expect(cable.current == .threeAmp)
-        #expect(cable.maxWatts == 60) // 20V * 3A
+        #expect(cable.maxWatts == 60)  // 20V * 3A
         #expect(cable.decodeWarnings.isEmpty)
     }
 
@@ -99,11 +100,13 @@ struct PDVDOTests {
     func subEPRVoltages_notClamped() {
         // 30V/5A cable: 30 is below the 48V ceiling, so power is the real
         // 30 * 5 = 150W. Clamping must not touch this case.
-        let cable30 = PDVDO.decodeCableVDO(0b100 | (2 << 5) | (1 << 9) | Self.validLatency, isActive: false)
+        let cable30 = PDVDO.decodeCableVDO(
+            0b100 | (2 << 5) | (1 << 9) | Self.validLatency, isActive: false)
         #expect(cable30.maxVolts == 30)
         #expect(cable30.maxWatts == 150)
         // 40V/5A cable: 40 * 5 = 200W, also unchanged.
-        let cable40 = PDVDO.decodeCableVDO(0b100 | (2 << 5) | (2 << 9) | Self.validLatency, isActive: false)
+        let cable40 = PDVDO.decodeCableVDO(
+            0b100 | (2 << 5) | (2 << 9) | Self.validLatency, isActive: false)
         #expect(cable40.maxVolts == 40)
         #expect(cable40.maxWatts == 200)
     }
@@ -143,8 +146,7 @@ struct PDVDOTests {
         #expect(cable.speed == .usb20)
         #expect(cable.current == .usbDefault)
         #expect(
-            cable.decodeWarnings ==
-            [.reservedSpeedEncoding(5), .reservedCurrentEncoding(3)]
+            cable.decodeWarnings == [.reservedSpeedEncoding(5), .reservedCurrentEncoding(3)]
         )
     }
 
@@ -175,8 +177,7 @@ struct PDVDOTests {
             let vdo = UInt32(0b011) | UInt32(2 << 5) | (UInt32(latencyBits) << 13)
             let cable = PDVDO.decodeCableVDO(vdo, isActive: false)
             #expect(
-                cable.decodeWarnings ==
-                [.reservedCableLatencyEncoding(latencyBits)],
+                cable.decodeWarnings == [.reservedCableLatencyEncoding(latencyBits)],
                 "Latency \(latencyBits) should be invalid for passive"
             )
         }
@@ -187,7 +188,9 @@ struct PDVDOTests {
         // Active cables carry optical-length latencies 1001 (~1000 ns)
         // and 1010 (~2000 ns) that passive cables would treat as invalid.
         for latencyBits in [9, 10] {
-            let vdo = UInt32(0b011) | UInt32(2 << 5) | (UInt32(latencyBits) << 13) | Self.validActiveTermination
+            let vdo =
+                UInt32(0b011) | UInt32(2 << 5) | (UInt32(latencyBits) << 13)
+                | Self.validActiveTermination
             let cable = PDVDO.decodeCableVDO(vdo, isActive: true)
             #expect(
                 cable.decodeWarnings.isEmpty,
@@ -199,11 +202,12 @@ struct PDVDOTests {
     @Test("Active cable latency 1011 and up is invalid")
     func activeCableLatency_1011AndUpInvalid() {
         for latencyBits in 11...15 {
-            let vdo = UInt32(0b011) | UInt32(2 << 5) | (UInt32(latencyBits) << 13) | Self.validActiveTermination
+            let vdo =
+                UInt32(0b011) | UInt32(2 << 5) | (UInt32(latencyBits) << 13)
+                | Self.validActiveTermination
             let cable = PDVDO.decodeCableVDO(vdo, isActive: true)
             #expect(
-                cable.decodeWarnings ==
-                [.reservedCableLatencyEncoding(latencyBits)],
+                cable.decodeWarnings == [.reservedCableLatencyEncoding(latencyBits)],
                 "Latency \(latencyBits) should be invalid even for active cables"
             )
         }
@@ -247,8 +251,7 @@ struct PDVDOTests {
             let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency | (UInt32(version) << 21)
             let cable = PDVDO.decodeCableVDO(vdo, isActive: false)
             #expect(
-                cable.decodeWarnings ==
-                [.invalidVDOVersion(version)],
+                cable.decodeWarnings == [.invalidVDOVersion(version)],
                 "VDO version \(version) should be invalid for passive"
             )
         }
@@ -258,7 +261,8 @@ struct PDVDOTests {
     func activeVDOVersionAcceptsDeprecatedAndV13() {
         // 000 (deprecated v1.0), 010 (deprecated v1.2), 011 (v1.3) all valid.
         for version in [0, 0b010, 0b011] {
-            let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency
+            let vdo: UInt32 =
+                0b011 | UInt32(2 << 5) | Self.validLatency
                 | Self.validActiveTermination | (UInt32(version) << 21)
             let cable = PDVDO.decodeCableVDO(vdo, isActive: true)
             #expect(
@@ -272,12 +276,12 @@ struct PDVDOTests {
     func activeVDOVersionInvalidValuesFlag() {
         // 001 and 100..111 are invalid for active cables.
         for version in [0b001, 0b100, 0b101, 0b110, 0b111] {
-            let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency
+            let vdo: UInt32 =
+                0b011 | UInt32(2 << 5) | Self.validLatency
                 | Self.validActiveTermination | (UInt32(version) << 21)
             let cable = PDVDO.decodeCableVDO(vdo, isActive: true)
             #expect(
-                cable.decodeWarnings ==
-                [.invalidVDOVersion(version)],
+                cable.decodeWarnings == [.invalidVDOVersion(version)],
                 "VDO version \(version) should be invalid for active"
             )
         }
@@ -306,8 +310,7 @@ struct PDVDOTests {
             let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency | (UInt32(term) << 11)
             let cable = PDVDO.decodeCableVDO(vdo, isActive: false)
             #expect(
-                cable.decodeWarnings ==
-                [.invalidCableTermination(term)],
+                cable.decodeWarnings == [.invalidCableTermination(term)],
                 "Termination \(term) should be invalid for passive"
             )
         }
@@ -333,8 +336,7 @@ struct PDVDOTests {
             let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency | (UInt32(term) << 11)
             let cable = PDVDO.decodeCableVDO(vdo, isActive: true)
             #expect(
-                cable.decodeWarnings ==
-                [.invalidCableTermination(term)],
+                cable.decodeWarnings == [.invalidCableTermination(term)],
                 "Termination \(term) should be invalid for active"
             )
         }
@@ -355,7 +357,8 @@ struct PDVDOTests {
     @Test("Passive EPR with 50V does not flag")
     func passiveEPRWith50VDoesNotFlag() {
         // EPR + 50V max is consistent.
-        let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency
+        let vdo: UInt32 =
+            0b011 | UInt32(2 << 5) | Self.validLatency
             | UInt32(1 << 17) | UInt32(0b11 << 9)
         let cable = PDVDO.decodeCableVDO(vdo, isActive: false)
         #expect(cable.eprCapable)
@@ -375,7 +378,8 @@ struct PDVDOTests {
     @Test("Active EPR with 20V does not flag")
     func activeEPRWith20VDoesNotFlag() {
         // H9a is passive-only; active cable EPR semantics need VDO2 decoder.
-        let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency
+        let vdo: UInt32 =
+            0b011 | UInt32(2 << 5) | Self.validLatency
             | Self.validActiveTermination | UInt32(1 << 17)
         let cable = PDVDO.decodeCableVDO(vdo, isActive: true)
         #expect(cable.eprCapable)
@@ -488,11 +492,11 @@ struct PDVDOTests {
             productID: 0,
             bcdDevice: 0,
             vdos: [
-                (3 << 27) | UInt32(0x05AC),    // passive product type
+                (3 << 27) | UInt32(0x05AC),  // passive product type
                 0,
                 0,
-                UInt32(0b011) | UInt32(2 << 5) | (1 << 13), // valid passive cable VDO
-                0xDEADBEEF                    // would-be VDO2
+                UInt32(0b011) | UInt32(2 << 5) | (1 << 13),  // valid passive cable VDO
+                0xDEAD_BEEF,  // would-be VDO2
             ],
             specRevision: 3
         )
@@ -502,8 +506,8 @@ struct PDVDOTests {
     @Test("Active cable VDO2 accessor works on active cable")
     func activeCableVDO2AccessorWorksOnActiveCable() {
         // Active cable (ufpProductType=4) with five VDOs.
-        let vdo3: UInt32 = UInt32(0b011) | UInt32(2 << 5) | (1 << 13) | (UInt32(0b10) << 11) // valid active termination
-        let vdo4: UInt32 = (1 << 10) | (1 << 9) | (1 << 2) // optical, re-timer, isolated
+        let vdo3: UInt32 = UInt32(0b011) | UInt32(2 << 5) | (1 << 13) | (UInt32(0b10) << 11)  // valid active termination
+        let vdo4: UInt32 = (1 << 10) | (1 << 9) | (1 << 2)  // optical, re-timer, isolated
         let active = USBPDSOP(
             id: 1,
             endpoint: .sopPrime,
@@ -517,7 +521,7 @@ struct PDVDOTests {
                 0,
                 0,
                 vdo3,
-                vdo4
+                vdo4,
             ],
             specRevision: 3
         )
@@ -543,7 +547,7 @@ struct PDVDOTests {
                 (4 << 27) | UInt32(0x05AC),
                 0,
                 0,
-                UInt32(0b011) | UInt32(2 << 5) | (1 << 13) | (UInt32(0b10) << 11)
+                UInt32(0b011) | UInt32(2 << 5) | (1 << 13) | (UInt32(0b10) << 11),
             ],
             specRevision: 3
         )
@@ -572,7 +576,7 @@ struct PDVDOTests {
     func vdoFromData_LittleEndian() {
         // 0xDEADBEEF stored little-endian = EF BE AD DE
         let data = Data([0xEF, 0xBE, 0xAD, 0xDE])
-        #expect(PDVDO.vdoFromData(data) == 0xDEADBEEF)
+        #expect(PDVDO.vdoFromData(data) == 0xDEAD_BEEF)
     }
 
     @Test("VDO from data too short")

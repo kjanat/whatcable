@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import WhatCableCore
 
 /// Exercises the bundle-walking logic that AppInfo.version uses when
@@ -36,8 +37,10 @@ struct AppInfoVersionTests {
         for _ in 0..<maxLevels {
             let plist = dir.appendingPathComponent("Info.plist")
             if let data = try? Data(contentsOf: plist),
-               let parsed = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
-               let v = parsed["CFBundleShortVersionString"] as? String {
+                let parsed = try? PropertyListSerialization.propertyList(from: data, format: nil)
+                    as? [String: Any],
+                let v = parsed["CFBundleShortVersionString"] as? String
+            {
                 return v
             }
             dir = dir.deletingLastPathComponent()
@@ -54,7 +57,8 @@ struct AppInfoVersionTests {
             try FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
         }
         let plist: [String: Any] = ["CFBundleShortVersionString": version]
-        let data = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
+        let data = try PropertyListSerialization.data(
+            fromPropertyList: plist, format: .xml, options: 0)
         try data.write(to: contents.appendingPathComponent("Info.plist"))
         // Empty placeholder binaries (we never execute them, just walk paths).
         let mainExe = macOS.appendingPathComponent("WhatCable")

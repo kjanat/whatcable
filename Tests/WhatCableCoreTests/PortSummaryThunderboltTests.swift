@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 /// Phase 3 integration: PortSummary should pull TB fabric data through and
@@ -145,7 +146,7 @@ struct PortSummaryThunderboltTests {
             vendor: "ASUS-Display", model: "PA32QCV",
             ports: [
                 lanePort(portNumber: 1, socketID: nil, speed: .usb4Tb4, widthRaw: 0x2),
-                lanePort(portNumber: 4, socketID: nil, speed: .tb3, widthRaw: 0x1)
+                lanePort(portNumber: 4, socketID: nil, speed: .tb3, widthRaw: 0x1),
             ]
         )
         let ts3 = sw(
@@ -164,11 +165,14 @@ struct PortSummaryThunderboltTests {
             "host link bullet missing; got: \(summary.bullets)"
         )
         #expect(
-            summary.bullets.contains("Connected via 2 hops: ASUS-Display PA32QCV → CalDigit, Inc. TS3 Plus"),
+            summary.bullets.contains(
+                "Connected via 2 hops: ASUS-Display PA32QCV → CalDigit, Inc. TS3 Plus"),
             "daisy-chain device list missing; got: \(summary.bullets)"
         )
         #expect(
-            summary.bullets.contains { $0.contains("Last leg drops from up to 20 Gb/s × 2 to up to 10 Gb/s × 1") },
+            summary.bullets.contains {
+                $0.contains("Last leg drops from up to 20 Gb/s × 2 to up to 10 Gb/s × 1")
+            },
             "step-down bullet missing; got: \(summary.bullets)"
         )
     }
@@ -283,7 +287,9 @@ struct PortSummaryThunderboltTests {
         )
 
         #expect(
-            summary.bullets.contains { $0.contains("E-marker reports passive") && $0.contains("Thunderbolt") },
+            summary.bullets.contains {
+                $0.contains("E-marker reports passive") && $0.contains("Thunderbolt")
+            },
             "expected passive-but-TB clarification bullet; got: \(summary.bullets)"
         )
     }
@@ -356,7 +362,9 @@ struct PortSummaryThunderboltTests {
         )
 
         #expect(
-            summary.bullets.contains { $0.contains("Controller confirms Thunderbolt cable") && $0.contains("40 Gbps") },
+            summary.bullets.contains {
+                $0.contains("Controller confirms Thunderbolt cable") && $0.contains("40 Gbps")
+            },
             "expected CIO confirmation bullet; got: \(summary.bullets)"
         )
         #expect(
@@ -364,7 +372,8 @@ struct PortSummaryThunderboltTests {
             "expected educational explanation bullet; got: \(summary.bullets)"
         )
         #expect(
-            summary.bullets.contains { $0.contains("Thunderbolt is negotiated separately") } == false,
+            summary.bullets.contains { $0.contains("Thunderbolt is negotiated separately") }
+                == false,
             "old fallback bullet should be gone when CIO confirms; got: \(summary.bullets)"
         )
     }
@@ -396,7 +405,10 @@ struct PortSummaryThunderboltTests {
         )
 
         #expect(
-            summary.bullets.contains { $0.contains("E-marker reports passive") && $0.contains("Thunderbolt is negotiated separately") },
+            summary.bullets.contains {
+                $0.contains("E-marker reports passive")
+                    && $0.contains("Thunderbolt is negotiated separately")
+            },
             "unknown CIO speed should fall back to passive/TB clarification; got: \(summary.bullets)"
         )
         #expect(

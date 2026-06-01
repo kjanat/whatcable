@@ -31,8 +31,9 @@ struct PortChoiceQuery: EntityQuery {
 
     private func readSnapshot() -> WidgetSnapshot? {
         guard let url = WidgetSnapshot.sharedFileURL,
-              let data = try? Data(contentsOf: url),
-              let snapshot = try? JSONDecoder().decode(WidgetSnapshot.self, from: data) else {
+            let data = try? Data(contentsOf: url),
+            let snapshot = try? JSONDecoder().decode(WidgetSnapshot.self, from: data)
+        else {
             return nil
         }
         let age = Date().timeIntervalSince(snapshot.timestamp)

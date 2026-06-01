@@ -16,8 +16,8 @@ import Foundation
 /// lanes are left for DP.
 public struct DisplayPortLaneConfig: Hashable {
     public enum Assignment: Hashable {
-        case fourLane   // C/E: all four lanes carry DP; no USB3 alongside
-        case twoLane    // D/F: two lanes DP, two lanes USB3
+        case fourLane  // C/E: all four lanes carry DP; no USB3 alongside
+        case twoLane  // D/F: two lanes DP, two lanes USB3
     }
 
     public let assignment: Assignment
@@ -39,7 +39,8 @@ public struct DisplayPortLaneConfig: Hashable {
     public var label: String {
         switch assignment {
         case .fourLane:
-            return String(localized: "4 DP lanes (no USB3 alongside video)", bundle: _coreLocalizedBundle)
+            return String(
+                localized: "4 DP lanes (no USB3 alongside video)", bundle: _coreLocalizedBundle)
         case .twoLane:
             return String(localized: "2 DP lanes + USB3 data", bundle: _coreLocalizedBundle)
         }

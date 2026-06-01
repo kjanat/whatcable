@@ -13,19 +13,24 @@ public enum PDVDO {
         case pdusbPeripheral = 2
         case passiveCable = 3
         case activeCable = 4
-        case ama = 5            // Alternate Mode Adapter
-        case vpd = 6            // VCONN-Powered Device
+        case ama = 5  // Alternate Mode Adapter
+        case vpd = 6  // VCONN-Powered Device
         case other = 7
 
         public var label: String {
             switch self {
             case .undefined: return String(localized: "Unspecified", bundle: _coreLocalizedBundle)
             case .pdusbHub: return String(localized: "USB Hub", bundle: _coreLocalizedBundle)
-            case .pdusbPeripheral: return String(localized: "USB Peripheral", bundle: _coreLocalizedBundle)
-            case .passiveCable: return String(localized: "Passive cable", bundle: _coreLocalizedBundle)
-            case .activeCable: return String(localized: "Active cable", bundle: _coreLocalizedBundle)
-            case .ama: return String(localized: "Alternate Mode Adapter", bundle: _coreLocalizedBundle)
-            case .vpd: return String(localized: "VCONN-powered device", bundle: _coreLocalizedBundle)
+            case .pdusbPeripheral:
+                return String(localized: "USB Peripheral", bundle: _coreLocalizedBundle)
+            case .passiveCable:
+                return String(localized: "Passive cable", bundle: _coreLocalizedBundle)
+            case .activeCable:
+                return String(localized: "Active cable", bundle: _coreLocalizedBundle)
+            case .ama:
+                return String(localized: "Alternate Mode Adapter", bundle: _coreLocalizedBundle)
+            case .vpd:
+                return String(localized: "VCONN-powered device", bundle: _coreLocalizedBundle)
             case .other: return String(localized: "Other", bundle: _coreLocalizedBundle)
             }
         }
@@ -57,18 +62,27 @@ public enum PDVDO {
 
     public enum CableSpeed: Int {
         case usb20 = 0
-        case usb32Gen1 = 1   // 5 Gbps
-        case usb32Gen2 = 2   // 10 Gbps
-        case usb4Gen3 = 3    // 20 Gbps (PD 3.0) / 40 Gbps (PD 3.1)
-        case usb4Gen4 = 4    // 80 Gbps
+        case usb32Gen1 = 1  // 5 Gbps
+        case usb32Gen2 = 2  // 10 Gbps
+        case usb4Gen3 = 3  // 20 Gbps (PD 3.0) / 40 Gbps (PD 3.1)
+        case usb4Gen4 = 4  // 80 Gbps
 
         public var label: String {
             switch self {
-            case .usb20: return String(localized: "USB 2.0 (480 Mbps)", bundle: _coreLocalizedBundle)
-            case .usb32Gen1: return String(localized: "USB 3.2 Gen 1 (5 Gbps)", bundle: _coreLocalizedBundle)
-            case .usb32Gen2: return String(localized: "USB 3.2 Gen 2 (10 Gbps)", bundle: _coreLocalizedBundle)
-            case .usb4Gen3: return String(localized: "USB4 Gen 3 (40 Gbps, Thunderbolt 4 class)", bundle: _coreLocalizedBundle)
-            case .usb4Gen4: return String(localized: "USB4 Gen 4 (80 Gbps, Thunderbolt 5 class)", bundle: _coreLocalizedBundle)
+            case .usb20:
+                return String(localized: "USB 2.0 (480 Mbps)", bundle: _coreLocalizedBundle)
+            case .usb32Gen1:
+                return String(localized: "USB 3.2 Gen 1 (5 Gbps)", bundle: _coreLocalizedBundle)
+            case .usb32Gen2:
+                return String(localized: "USB 3.2 Gen 2 (10 Gbps)", bundle: _coreLocalizedBundle)
+            case .usb4Gen3:
+                return String(
+                    localized: "USB4 Gen 3 (40 Gbps, Thunderbolt 4 class)",
+                    bundle: _coreLocalizedBundle)
+            case .usb4Gen4:
+                return String(
+                    localized: "USB4 Gen 4 (80 Gbps, Thunderbolt 5 class)",
+                    bundle: _coreLocalizedBundle)
             }
         }
 
@@ -84,13 +98,13 @@ public enum PDVDO {
     }
 
     public enum CableCurrent: Int {
-        case usbDefault = 0   // 900 mA / 1.5 A typical USB
+        case usbDefault = 0  // 900 mA / 1.5 A typical USB
         case threeAmp = 1
         case fiveAmp = 2
 
         public var maxAmps: Double {
             switch self {
-            case .usbDefault: return 3.0   // be charitable; Type-C default current is 3A on cables
+            case .usbDefault: return 3.0  // be charitable; Type-C default current is 3A on cables
             case .threeAmp: return 3.0
             case .fiveAmp: return 5.0
             }
@@ -187,7 +201,7 @@ public enum PDVDO {
             case 0b0101: return 50
             case 0b0110: return 60
             case 0b0111: return 70
-            case 0b1000: return 80    // ">70 ns" per spec; treat as 80 for display purposes
+            case 0b1000: return 80  // ">70 ns" per spec; treat as 80 for display purposes
             case 0b1001 where cableType == .active: return 1000
             case 0b1010 where cableType == .active: return 2000
             default: return nil
@@ -245,7 +259,8 @@ public enum PDVDO {
         // are accepted. 001 and 100..111 are Invalid per Table 6.43.
         let vdoVersionInvalid: Bool
         if isActive {
-            vdoVersionInvalid = !(vdoVersionBits == 0 || vdoVersionBits == 0b010 || vdoVersionBits == 0b011)
+            vdoVersionInvalid =
+                !(vdoVersionBits == 0 || vdoVersionBits == 0b010 || vdoVersionBits == 0b011)
         } else {
             vdoVersionInvalid = vdoVersionBits != 0
         }
@@ -345,13 +360,13 @@ public enum PDVDO {
     /// is in U3 / CLd. Matters for thermal and battery-life accounting on
     /// portable hosts. Bits 14..12.
     public enum U3CLdPower: Int {
-        case greaterThan10mW = 0      // > 10 mW
-        case fiveTo10mW = 1           // 5-10 mW
-        case oneTo5mW = 2             // 1-5 mW
-        case halfTo1mW = 3            // 0.5-1 mW
-        case fifthToHalfmW = 4        // 0.2-0.5 mW
-        case fiftyTo200uW = 5         // 50-200 µW
-        case lessThan50uW = 6         // < 50 µW
+        case greaterThan10mW = 0  // > 10 mW
+        case fiveTo10mW = 1  // 5-10 mW
+        case oneTo5mW = 2  // 1-5 mW
+        case halfTo1mW = 3  // 0.5-1 mW
+        case fifthToHalfmW = 4  // 0.2-0.5 mW
+        case fiftyTo200uW = 5  // 50-200 µW
+        case lessThan50uW = 6  // < 50 µW
         case reserved = 7
 
         public var label: String {
@@ -360,7 +375,8 @@ public enum PDVDO {
             case .fiveTo10mW: return String(localized: "5-10 mW", bundle: _coreLocalizedBundle)
             case .oneTo5mW: return String(localized: "1-5 mW", bundle: _coreLocalizedBundle)
             case .halfTo1mW: return String(localized: "0.5-1 mW", bundle: _coreLocalizedBundle)
-            case .fifthToHalfmW: return String(localized: "0.2-0.5 mW", bundle: _coreLocalizedBundle)
+            case .fifthToHalfmW:
+                return String(localized: "0.2-0.5 mW", bundle: _coreLocalizedBundle)
             case .fiftyTo200uW: return String(localized: "50-200 µW", bundle: _coreLocalizedBundle)
             case .lessThan50uW: return String(localized: "< 50 µW", bundle: _coreLocalizedBundle)
             case .reserved: return String(localized: "Reserved", bundle: _coreLocalizedBundle)

@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("PD Event Trace")
@@ -22,13 +23,17 @@ struct PDEventTests {
             (0xf1, .alert),
         ]
         for (code, event) in expected {
-            #expect(PDEvent(rawValue: code) == event, "0x\(String(code, radix: 16)) should decode to \(event)")
+            #expect(
+                PDEvent(rawValue: code) == event,
+                "0x\(String(code, radix: 16)) should decode to \(event)")
         }
     }
 
     @Test("Round-trip: rawValue matches init input for all known codes")
     func roundTrip() {
-        let codes: [UInt8] = [0x01, 0x02, 0x03, 0x1a, 0x30, 0x31, 0x37, 0x3f, 0x40, 0x48, 0x5e, 0x5f, 0xf0, 0xf1]
+        let codes: [UInt8] = [
+            0x01, 0x02, 0x03, 0x1a, 0x30, 0x31, 0x37, 0x3f, 0x40, 0x48, 0x5e, 0x5f, 0xf0, 0xf1,
+        ]
         for code in codes {
             let event = PDEvent(rawValue: code)
             #expect(event.rawValue == code, "Round-trip failed for 0x\(String(code, radix: 16))")
@@ -51,20 +56,22 @@ struct PDEventTests {
     func realTrace() {
         // Observed buffer from planning doc: 10 48 48 5f 5e 00 5f 40 01 5e 00 37 02
         // After filtering 0x00:             10 48 48 5f 5e 5f 40 01 5e 37 02
-        let buffer: [UInt8] = [0x10, 0x48, 0x48, 0x5f, 0x5e, 0x00, 0x5f, 0x40, 0x01, 0x5e, 0x00, 0x37, 0x02]
+        let buffer: [UInt8] = [
+            0x10, 0x48, 0x48, 0x5f, 0x5e, 0x00, 0x5f, 0x40, 0x01, 0x5e, 0x00, 0x37, 0x02,
+        ]
         let filtered = buffer.filter { $0 != 0x00 }
         let events = filtered.map(PDEvent.init(rawValue:))
         #expect(events.count == 11)
         // index 0: 0x10 = unknown
-        #expect(events[1] == .rxIdSop)       // 0x48
-        #expect(events[2] == .rxIdSop)       // 0x48
-        #expect(events[3] == .uvdmEnum)      // 0x5f
-        #expect(events[4] == .uvdmStatusUpdate) // 0x5e
-        #expect(events[5] == .uvdmEnum)      // 0x5f
-        #expect(events[6] == .appLoaded)     // 0x40
-        #expect(events[7] == .plugInsertOrRemoval) // 0x01
-        #expect(events[8] == .uvdmStatusUpdate)    // 0x5e
-        #expect(events[9] == .usb2Plug)      // 0x37
-        #expect(events[10] == .prSwapComplete) // 0x02
+        #expect(events[1] == .rxIdSop)  // 0x48
+        #expect(events[2] == .rxIdSop)  // 0x48
+        #expect(events[3] == .uvdmEnum)  // 0x5f
+        #expect(events[4] == .uvdmStatusUpdate)  // 0x5e
+        #expect(events[5] == .uvdmEnum)  // 0x5f
+        #expect(events[6] == .appLoaded)  // 0x40
+        #expect(events[7] == .plugInsertOrRemoval)  // 0x01
+        #expect(events[8] == .uvdmStatusUpdate)  // 0x5e
+        #expect(events[9] == .usb2Plug)  // 0x37
+        #expect(events[10] == .prSwapComplete)  // 0x02
     }
 }

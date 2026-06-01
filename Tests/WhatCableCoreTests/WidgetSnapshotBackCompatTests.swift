@@ -1,34 +1,35 @@
 import XCTest
+
 @testable import WhatCableCore
 
 final class WidgetSnapshotBackCompatTests: XCTestCase {
     func testDecodesPrePowerStateSnapshot() throws {
         let json = """
-        {
-            "ports": [
-                {
-                    "id": 1,
-                    "portName": "USB-C Port 1",
-                    "status": "charging",
-                    "headline": "Charging - 96W charger",
-                    "subtitle": "Power is flowing.",
-                    "topBullet": "Charger advertises up to 96W",
-                    "iconName": "bolt.fill",
-                    "deviceCount": 0,
-                    "recentPower": [12.5, 13.0]
-                },
-                {
-                    "id": 2,
-                    "portName": "USB-C Port 2",
-                    "status": "empty",
-                    "headline": "Nothing connected",
-                    "subtitle": "Plug a cable in.",
-                    "iconName": "powerplug"
-                }
-            ],
-            "timestamp": 738835200.0
-        }
-        """.data(using: .utf8)!
+            {
+                "ports": [
+                    {
+                        "id": 1,
+                        "portName": "USB-C Port 1",
+                        "status": "charging",
+                        "headline": "Charging - 96W charger",
+                        "subtitle": "Power is flowing.",
+                        "topBullet": "Charger advertises up to 96W",
+                        "iconName": "bolt.fill",
+                        "deviceCount": 0,
+                        "recentPower": [12.5, 13.0]
+                    },
+                    {
+                        "id": 2,
+                        "portName": "USB-C Port 2",
+                        "status": "empty",
+                        "headline": "Nothing connected",
+                        "subtitle": "Plug a cable in.",
+                        "iconName": "powerplug"
+                    }
+                ],
+                "timestamp": 738835200.0
+            }
+            """.data(using: .utf8)!
 
         let snapshot = try JSONDecoder().decode(WidgetSnapshot.self, from: json)
 
@@ -56,30 +57,30 @@ final class WidgetSnapshotBackCompatTests: XCTestCase {
 
     func testDecodesSnapshotWithPowerState() throws {
         let json = """
-        {
-            "ports": [
-                {
-                    "id": 1,
-                    "portName": "USB-C Port 1",
-                    "status": "charging",
-                    "headline": "Charging",
-                    "subtitle": "Power is flowing.",
-                    "iconName": "bolt.fill",
-                    "portKey": "2/1",
-                    "chargerWatts": 96
+            {
+                "ports": [
+                    {
+                        "id": 1,
+                        "portName": "USB-C Port 1",
+                        "status": "charging",
+                        "headline": "Charging",
+                        "subtitle": "Power is flowing.",
+                        "iconName": "bolt.fill",
+                        "portKey": "2/1",
+                        "chargerWatts": 96
+                    }
+                ],
+                "timestamp": 738835200.0,
+                "powerState": {
+                    "batteryPercent": 78,
+                    "isCharging": true,
+                    "fullyCharged": false,
+                    "isDesktopMac": false,
+                    "adapterWatts": 96,
+                    "adapterDescription": "pd charger"
                 }
-            ],
-            "timestamp": 738835200.0,
-            "powerState": {
-                "batteryPercent": 78,
-                "isCharging": true,
-                "fullyCharged": false,
-                "isDesktopMac": false,
-                "adapterWatts": 96,
-                "adapterDescription": "pd charger"
             }
-        }
-        """.data(using: .utf8)!
+            """.data(using: .utf8)!
 
         let snapshot = try JSONDecoder().decode(WidgetSnapshot.self, from: json)
 

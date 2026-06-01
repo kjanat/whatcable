@@ -25,7 +25,8 @@ final class DetachedProWindowManager: NSObject, NSWindowDelegate {
             existing.makeKeyAndOrderFront(nil)
             return
         }
-        guard let screen = PluginRegistry.shared.proScreen(id: route.id, portCard: route.portCard) else {
+        guard let screen = PluginRegistry.shared.proScreen(id: route.id, portCard: route.portCard)
+        else {
             return
         }
         let host = NSHostingController(rootView: screen)
@@ -55,7 +56,8 @@ final class DetachedProWindowManager: NSObject, NSWindowDelegate {
     nonisolated func windowWillClose(_ notification: Notification) {
         Task { @MainActor in
             guard let w = notification.object as? NSWindow,
-                  let id = w.identifier?.rawValue else { return }
+                let id = w.identifier?.rawValue
+            else { return }
             windows[id] = nil
         }
     }
@@ -79,7 +81,8 @@ final class DetachedProWindowManager: NSObject, NSWindowDelegate {
         case "pro.cable-diagnostics":
             let num = route.portCard?.portNumber ?? 0
             if let type = route.portCard?.portTypeDescription {
-                return String(localized: "\(type) Port \(num) Diagnostics", bundle: _appLocalizedBundle)
+                return String(
+                    localized: "\(type) Port \(num) Diagnostics", bundle: _appLocalizedBundle)
             }
             return String(localized: "Cable Diagnostics", bundle: _appLocalizedBundle)
         case "pro.overview":

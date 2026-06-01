@@ -9,6 +9,10 @@ import WhatCableCore
 enum LinuxUSB {
     static var root: String { "\(Sysfs.base)/bus/usb/devices" }
 
+    /// Enumerates USB devices from sysfs and returns a list of discovered USBDevice records.
+    ///
+    /// Scans the Linux USB sysfs root for device nodes, ignoring interface entries (names containing `:`) and skipping any node that lacks `idVendor` or `idProduct`. For each discovered device it synthesizes a WhatCableCore-style `locationID` from `busnum`/`devpath`, reads identification strings and attributes (vendor/product IDs, manufacturer/product/serial/version strings, negotiated link speed, and bMaxPower), and includes all sysfs attributes in `rawProperties`.
+    /// - Returns: An array of `USBDevice` objects representing USB devices discovered under the sysfs USB root.
     static func read() -> [USBDevice] {
         var devices: [USBDevice] = []
         for name in Sysfs.list(root) {
@@ -19,7 +23,8 @@ enum LinuxUSB {
             if name.contains(":") { continue }
             let dir = "\(root)/\(name)"
             guard let vid = Sysfs.hex32("\(dir)/idVendor"),
-                  let pid = Sysfs.hex32("\(dir)/idProduct") else { continue }
+                let pid = Sysfs.hex32("\(dir)/idProduct")
+            else { continue }
 
             let busnum = Sysfs.int("\(dir)/busnum") ?? 0
             let devpath = Sysfs.string("\(dir)/devpath") ?? "0"
@@ -40,7 +45,9 @@ enum LinuxUSB {
                     currentMA: nil,  // Live draw isn't exposed per-device on Linux.
                     busIndex: busnum,
                     controllerPortName: nil,
-                    deviceClass: Sysfs.hex32("\(dir)/bDeviceClass").map { UInt8(truncatingIfNeeded: $0) },
+                    deviceClass: Sysfs.hex32("\(dir)/bDeviceClass").map {
+                        UInt8(truncatingIfNeeded: $0)
+                    },
                     ioClassName: nil,
                     rawProperties: Sysfs.attributes(in: dir)
                 )
@@ -49,11 +56,14 @@ enum LinuxUSB {
         return devices
     }
 
-    /// Pack busnum + devpath into the bit layout WhatCableCore expects:
-    /// bits 31-24 = controller/bus index, bits 23-0 = hub-path nibbles
-    /// (one nibble per hop, most-significant first). `devpath` is a
-    /// dotted hop list like "1.2.1"; a direct-attached device has a single
-    /// hop, giving exactly one non-zero nibble (`isRootDevice == true`).
+    /// Constructs a WhatCableCore-compatible USB location ID from a bus number and a dot-separated device path.
+    ///
+    /// The returned 32-bit value packs the bus number into bits 31–24 and encodes up to six hub-path hops as 4-bit nibbles in bits 23–0.
+    /// Each hop is parsed from `devpath` (split by "."), converted to an integer, and truncated to its low 4 bits; hops beyond the sixth are ignored.
+    /// - Parameters:
+    ///   - busnum: USB bus number; only the low 8 bits are used.
+    ///   - devpath: Dot-separated hub hops (e.g., "1.2.3"); non-numeric components are skipped.
+    /// - Returns: A `UInt32` location ID with the bus number in bits 31–24 and up to six 4-bit hop nibbles in bits 23–0.
     static func locationID(busnum: Int, devpath: String) -> UInt32 {
         var path: UInt32 = 0
         let hops = devpath.split(separator: ".").compactMap { Int($0) }
@@ -64,21 +74,24 @@ enum LinuxUSB {
         return (UInt32(busnum & 0xFF) << 24) | (path & 0x00FF_FFFF)
     }
 
-    /// Map the kernel's negotiated link `speed` (in Mbps) onto the
-    /// `IOUSBHostDevice` "Device Speed" enum WhatCableCore decodes.
+    /// Maps a link speed string in megabits per second to WhatCableCore's device speed code.
+    /// - Parameter speed: A string containing the negotiated link speed in megabits per second (as provided by sysfs), or `nil`.
+    /// - Returns: The corresponding `UInt8` device speed code (`0` = Low Speed ≈1.5 Mbps, `1` = Full Speed 12 Mbps, `2` = High Speed 480 Mbps, `3` = SuperSpeed 5 Gbps, `4` = SuperSpeed+ 10 Gbps, `5` = SuperSpeed+ Gen 2x2 20+ Gbps), or `nil` if `speed` is `nil` or cannot be parsed as a number.
     static func speedRaw(_ speed: String?) -> UInt8? {
         guard let speed, let mbps = Double(speed) else { return nil }
         switch mbps {
-        case ..<2:        return 0   // 1.5 Mbps — Low Speed
-        case ..<13:       return 1   // 12 Mbps — Full Speed
-        case ..<481:      return 2   // 480 Mbps — High Speed
-        case ..<5001:     return 3   // 5 Gbps — SuperSpeed
-        case ..<10001:    return 4   // 10 Gbps — SuperSpeed+
-        default:          return 5   // 20 Gbps — SuperSpeed+ Gen 2x2
+        case ..<2: return 0  // 1.5 Mbps — Low Speed
+        case ..<13: return 1  // 12 Mbps — Full Speed
+        case ..<481: return 2  // 480 Mbps — High Speed
+        case ..<5001: return 3  // 5 Gbps — SuperSpeed
+        case ..<10001: return 4  // 10 Gbps — SuperSpeed+
+        default: return 5  // 20 Gbps — SuperSpeed+ Gen 2x2
         }
     }
 
-    /// Parse `bMaxPower` ("500mA", "0mA", or a bare number) into milliamps.
+    /// Parses a sysfs bMaxPower value and returns the leading numeric component in milliamps.
+    /// - Parameter s: The raw sysfs string (for example `"500mA"`) that may start with digits.
+    /// - Returns: The leading integer parsed from `s` (milliamps), or `nil` if `s` is `nil` or contains no leading digits.
     static func maxPowerMA(_ s: String?) -> Int? {
         guard let s else { return nil }
         let digits = s.prefix { $0.isNumber }

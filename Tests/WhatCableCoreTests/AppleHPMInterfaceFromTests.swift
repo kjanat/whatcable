@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WhatCableCore
 
 /// Covers `USBCPort.from(...)` -- the pure factory the watcher uses to turn a
@@ -43,12 +44,12 @@ struct USBCPortFromTests {
                 "rx2": NSNumber(value: 5),
                 "tx2": NSNumber(value: 6),
                 "sbu2": NSNumber(value: 2),
-                "rx1": NSNumber(value: 2)
+                "rx1": NSNumber(value: 2),
             ],
             "IOAccessoryPowerCurrentLimits": [
                 NSNumber(value: 0), NSNumber(value: 0), NSNumber(value: 0),
-                NSNumber(value: 0), NSNumber(value: 0)
-            ]
+                NSNumber(value: 0), NSNumber(value: 0),
+            ],
         ]
     }
 
@@ -78,12 +79,12 @@ struct USBCPortFromTests {
                 "rx2": NSNumber(value: 0),
                 "tx2": NSNumber(value: 0),
                 "sbu2": NSNumber(value: 0),
-                "rx1": NSNumber(value: 0)
+                "rx1": NSNumber(value: 0),
             ],
             "IOAccessoryPowerCurrentLimits": [
                 NSNumber(value: 0), NSNumber(value: 0), NSNumber(value: 0),
-                NSNumber(value: 0), NSNumber(value: 0)
-            ]
+                NSNumber(value: 0), NSNumber(value: 0),
+            ],
         ]
     }
 
@@ -91,12 +92,13 @@ struct USBCPortFromTests {
 
     @Test("M2 MBA USB-C port parses")
     func m2MBA_USBCPort_Parses() throws {
-        let port = try #require(USBCPort.from(
-            entryID: 0x1000005c4,
-            serviceName: "Port-USB-C@1",
-            className: "AppleTCControllerType10",
-            read: { self.m2MBA_USBC_Disconnected[$0] }
-        ))
+        let port = try #require(
+            USBCPort.from(
+                entryID: 0x1_0000_05c4,
+                serviceName: "Port-USB-C@1",
+                className: "AppleTCControllerType10",
+                read: { self.m2MBA_USBC_Disconnected[$0] }
+            ))
         #expect(port.serviceName == "Port-USB-C@1")
         #expect(port.className == "AppleTCControllerType10")
         #expect(port.portTypeDescription == "USB-C")
@@ -110,12 +112,13 @@ struct USBCPortFromTests {
 
     @Test("M2 MBA MagSafe port parses")
     func m2MBA_MagSafePort_Parses() throws {
-        let port = try #require(USBCPort.from(
-            entryID: 0x1000005cd,
-            serviceName: "Port-MagSafe 3@1",
-            className: "AppleTCControllerType11",
-            read: { self.m2MBA_MagSafe_Connected[$0] }
-        ))
+        let port = try #require(
+            USBCPort.from(
+                entryID: 0x1_0000_05cd,
+                serviceName: "Port-MagSafe 3@1",
+                className: "AppleTCControllerType11",
+                read: { self.m2MBA_MagSafe_Connected[$0] }
+            ))
         #expect(port.portTypeDescription == "MagSafe 3")
         #expect(port.connectionActive == true)
         #expect(port.transportsActive == ["CC"])
@@ -128,18 +131,20 @@ struct USBCPortFromTests {
     /// verbatim.
     @Test("connectionActive preserved from properties")
     func connectionActivePreservedFromProperties() throws {
-        let disconnected = try #require(USBCPort.from(
-            entryID: 1, serviceName: "Port-USB-C@1",
-            className: "AppleTCControllerType10",
-            read: { self.m2MBA_USBC_Disconnected[$0] }
-        ))
+        let disconnected = try #require(
+            USBCPort.from(
+                entryID: 1, serviceName: "Port-USB-C@1",
+                className: "AppleTCControllerType10",
+                read: { self.m2MBA_USBC_Disconnected[$0] }
+            ))
         #expect(disconnected.connectionActive == false)
 
-        let connected = try #require(USBCPort.from(
-            entryID: 2, serviceName: "Port-MagSafe 3@1",
-            className: "AppleTCControllerType11",
-            read: { self.m2MBA_MagSafe_Connected[$0] }
-        ))
+        let connected = try #require(
+            USBCPort.from(
+                entryID: 2, serviceName: "Port-MagSafe 3@1",
+                className: "AppleTCControllerType11",
+                read: { self.m2MBA_MagSafe_Connected[$0] }
+            ))
         #expect(connected.connectionActive == true)
     }
 
@@ -188,10 +193,11 @@ struct USBCPortFromTests {
         // hardware (MagSafe 4?) shouldn't need a code change here.
         var props = m2MBA_MagSafe_Connected
         props["PortTypeDescription"] = "MagSafe 4"
-        let port = try #require(USBCPort.from(
-            entryID: 1, serviceName: "Port-MagSafe 4@1",
-            className: "AppleTCControllerType11", read: { props[$0] }
-        ))
+        let port = try #require(
+            USBCPort.from(
+                entryID: 1, serviceName: "Port-MagSafe 4@1",
+                className: "AppleTCControllerType11", read: { props[$0] }
+            ))
         #expect(port.portTypeDescription == "MagSafe 4")
     }
 
@@ -204,11 +210,12 @@ struct USBCPortFromTests {
     /// watcher doesn't accidentally require changes here too.
     @Test("accepts arbitrary className for real port")
     func acceptsArbitraryClassNameForRealPort() throws {
-        let port = try #require(USBCPort.from(
-            entryID: 1, serviceName: "Port-USB-C@1",
-            className: "AppleHPMInterfaceType99",
-            read: { self.m2MBA_USBC_Disconnected[$0] }
-        ))
+        let port = try #require(
+            USBCPort.from(
+                entryID: 1, serviceName: "Port-USB-C@1",
+                className: "AppleHPMInterfaceType99",
+                read: { self.m2MBA_USBC_Disconnected[$0] }
+            ))
         #expect(port.className == "AppleHPMInterfaceType99")
     }
 
@@ -219,21 +226,23 @@ struct USBCPortFromTests {
         var props = m2MBA_USBC_Disconnected
         props["FW Version"] = Data([0x01, 0x02, 0xAB, 0xFF])
         props["Boot Flags"] = Data([0xDE, 0xAD])
-        let port = try #require(USBCPort.from(
-            entryID: 1, serviceName: "Port-USB-C@1",
-            className: "AppleTCControllerType10", read: { props[$0] }
-        ))
+        let port = try #require(
+            USBCPort.from(
+                entryID: 1, serviceName: "Port-USB-C@1",
+                className: "AppleTCControllerType10", read: { props[$0] }
+            ))
         #expect(port.firmwareVersion == "01 02 AB FF")
         #expect(port.bootFlagsHex == "DE AD")
     }
 
     @Test("hex Data fields nil when missing")
     func hexDataFieldsAreNilWhenMissing() throws {
-        let port = try #require(USBCPort.from(
-            entryID: 1, serviceName: "Port-USB-C@1",
-            className: "AppleTCControllerType10",
-            read: { self.m2MBA_USBC_Disconnected[$0] }
-        ))
+        let port = try #require(
+            USBCPort.from(
+                entryID: 1, serviceName: "Port-USB-C@1",
+                className: "AppleTCControllerType10",
+                read: { self.m2MBA_USBC_Disconnected[$0] }
+            ))
         #expect(port.firmwareVersion == nil)
         #expect(port.bootFlagsHex == nil)
     }
@@ -243,22 +252,24 @@ struct USBCPortFromTests {
         var props = m2MBA_USBC_Disconnected
         props["IOAccessoryPowerCurrentLimits"] = [
             NSNumber(value: 1500), NSNumber(value: 3000),
-            NSNumber(value: 4500), NSNumber(value: 0), NSNumber(value: 0)
+            NSNumber(value: 4500), NSNumber(value: 0), NSNumber(value: 0),
         ]
-        let port = try #require(USBCPort.from(
-            entryID: 1, serviceName: "Port-USB-C@1",
-            className: "AppleTCControllerType10", read: { props[$0] }
-        ))
+        let port = try #require(
+            USBCPort.from(
+                entryID: 1, serviceName: "Port-USB-C@1",
+                className: "AppleTCControllerType10", read: { props[$0] }
+            ))
         #expect(port.powerCurrentLimits == [1500, 3000, 4500, 0, 0])
     }
 
     @Test("raw properties capture known keys as strings")
     func rawPropertiesCaptureAllKeys() throws {
-        let port = try #require(USBCPort.from(
-            entryID: 1, serviceName: "Port-USB-C@1",
-            className: "AppleTCControllerType10",
-            read: { self.m2MBA_USBC_Disconnected[$0] }
-        ))
+        let port = try #require(
+            USBCPort.from(
+                entryID: 1, serviceName: "Port-USB-C@1",
+                className: "AppleTCControllerType10",
+                read: { self.m2MBA_USBC_Disconnected[$0] }
+            ))
         // Raw props mirror every key from the input dictionary as a string.
         #expect(port.rawProperties["PortType"] == "2")
         #expect(port.rawProperties["PortNumber"] == "1")
@@ -268,12 +279,13 @@ struct USBCPortFromTests {
 
     @Test("busIndex passed through")
     func busIndexPassedThrough() throws {
-        let port = try #require(USBCPort.from(
-            entryID: 1, serviceName: "Port-USB-C@1",
-            className: "AppleHPMInterfaceType10",
-            read: { self.m2MBA_USBC_Disconnected[$0] },
-            busIndex: 5
-        ))
+        let port = try #require(
+            USBCPort.from(
+                entryID: 1, serviceName: "Port-USB-C@1",
+                className: "AppleHPMInterfaceType10",
+                read: { self.m2MBA_USBC_Disconnected[$0] },
+                busIndex: 5
+            ))
         #expect(port.busIndex == 5)
     }
 
@@ -320,7 +332,8 @@ struct USBCPortFromTests {
 
         // Both have portNumber 1, but portKey must differ.
         #expect(usbC.portNumber == magSafe.portNumber)
-        #expect(usbC.portKey != magSafe.portKey,
+        #expect(
+            usbC.portKey != magSafe.portKey,
             "USB-C and MagSafe with same portNumber must have different portKeys")
 
         // Verify the expected formats: USB-C uses PortType 2, MagSafe uses 0x11 (17).
