@@ -102,7 +102,7 @@ side — it only binds loopback.
 
 ## Architecture note
 
-```
+```text
 WhatCableCore  (shared engine: models, PortSummary, formatters, cable DB)
    ├── WhatCableDarwinBackend   (macOS: IOKit)        → CableSnapshot
    └── WhatCableLinuxBackend    (Linux: sysfs)        → CableSnapshot

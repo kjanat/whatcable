@@ -3,6 +3,8 @@ import Foundation
 import SQLite3            // Apple platforms ship the SQLite3 module
 #elseif canImport(CSQLite)
 import CSQLite            // Linux: system-library shim (see Sources/CSQLite)
+#else
+#error("Neither SQLite3 nor CSQLite is available on this platform/toolchain. On Linux, add the CSQLite system-library target and install the SQLite dev headers (e.g. libsqlite3-dev).")
 #endif
 
 /// Read-only SQLite-backed lookup for vendors and known cables.

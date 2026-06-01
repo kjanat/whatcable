@@ -105,12 +105,15 @@ enum LinuxTypeC {
         var supported = ["CC", "USB2"]
         var active: [String] = []
         if connected {
-            // A connected USB-C partner almost always brings up USB2 as the
-            // baseline link; refine with DisplayPort / Thunderbolt when the
-            // matching alternate mode has been entered.
-            active.append("USB2")
             if dpActive { active.append("DisplayPort"); supported.append("DisplayPort") }
             if tbActive { active.append("CIO"); supported.append("CIO") }
+            // USB-C keeps the USB2 D+/D- pair wired alongside DisplayPort and
+            // Thunderbolt alt modes, so USB2 is genuinely active there. For a
+            // bare partner the Type-C class exposes no USB-data signal, so we
+            // do NOT assert USB2 — fabricating it would mislabel charge-only
+            // connections as "Slow USB device" and suppress the charging /
+            // battery-full headlines. Those paths handle the bare case.
+            if dpActive || tbActive { active.append("USB2") }
         }
 
         var raw = Sysfs.attributes(in: portDir)

@@ -47,30 +47,35 @@ let provider = makeDefaultSnapshotProvider()
 /// Bridge the provider's async `snapshot()` into the synchronous HTTP handler.
 /// A status page polled every couple of seconds doesn't need concurrency, and
 /// a blocking read keeps the server loop trivial.
-func blockingSnapshot() -> CableSnapshot? {
+func blockingSnapshot() -> Result<CableSnapshot, Error> {
     let sem = DispatchSemaphore(value: 0)
-    var result: CableSnapshot?
+    var result: Result<CableSnapshot, Error> = .failure(LinuxBackendError.typeCClassUnavailable)
     Task {
-        result = try? await provider.snapshot()
+        do { result = .success(try await provider.snapshot()) }
+        catch { result = .failure(error) }
         sem.signal()
     }
     sem.wait()
     return result
 }
 
-// Preflight: surface the "no Type-C class" error clearly instead of serving a
-// permanently empty page.
-if blockingSnapshot() == nil {
-    FileHandle.standardError.write(Data("whatcable-gui: \(LinuxBackendError.typeCClassUnavailable)\n".utf8))
+// Preflight: surface the actual backend error (not a hardcoded one) clearly
+// instead of serving a permanently empty page.
+if case .failure(let error) = blockingSnapshot() {
+    FileHandle.standardError.write(Data("whatcable-gui: \(error)\n".utf8))
     exit(1)
 }
 
 let server = HTTPServer(port: port) { request in
-    guard let snapshot = blockingSnapshot() else {
+    let snapshot: CableSnapshot
+    switch blockingSnapshot() {
+    case .success(let value):
+        snapshot = value
+    case .failure(let error):
         return HTTPServer.Response(
             status: "503 Service Unavailable",
             contentType: "text/plain; charset=utf-8",
-            body: "WhatCable: could not read a snapshot."
+            body: "WhatCable: could not read a snapshot: \(error)"
         )
     }
     switch request.path {
