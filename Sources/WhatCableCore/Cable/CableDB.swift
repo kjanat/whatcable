@@ -14,8 +14,10 @@ import CSQLite            // Linux: system-library shim (see Sources/CSQLite)
 /// is closed. For ~14k vendors and a handful of cables this is a few
 /// hundred KB of resident memory, same as the old TSV loader.
 ///
-/// Uses the system SQLite3 C API (a macOS system framework), so there's
-/// no SPM dependency to add.
+/// Uses the system SQLite3 C API. On macOS that's the built-in `SQLite3`
+/// system framework (no SPM dependency); on Linux it's the `CSQLite` SPM
+/// systemLibrary target (see `Sources/CSQLite`), which links the system
+/// `libsqlite3`. Either way the SQLite C symbols are the same.
 public enum CableDB {
     /// Vendor entry with provenance tracking.
     struct VendorEntry {
