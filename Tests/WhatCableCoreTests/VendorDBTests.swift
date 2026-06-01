@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("VendorDB")
@@ -23,18 +24,15 @@ struct VendorDBTests {
         // (#44, #45, #48, #49, #60, #62). USB-IF carries each of them
         // with its full legal name; we surface that as-is.
         #expect(
-            VendorDB.name(for: 0x20C2) ==
-            "Sumitomo Electric Ind., Ltd., Optical Comm. R&D Lab"
+            VendorDB.name(for: 0x20C2) == "Sumitomo Electric Ind., Ltd., Optical Comm. R&D Lab"
         )
         #expect(
-            VendorDB.name(for: 0x315C) ==
-            "Chengdu Convenientpower Semiconductor Co., LTD"
+            VendorDB.name(for: 0x315C) == "Chengdu Convenientpower Semiconductor Co., LTD"
         )
         #expect(VendorDB.name(for: 0x2095) == "CE LINK LIMITED")
         #expect(VendorDB.name(for: 0x2E99) == "Hynetek Semiconductor Co., Ltd")
         #expect(
-            VendorDB.name(for: 0x201C) ==
-            "Hongkong Freeport Electronics Co., Limited"
+            VendorDB.name(for: 0x201C) == "Hongkong Freeport Electronics Co., Limited"
         )
         #expect(VendorDB.name(for: 0x2B1D) == "Lintes Technology Co., Ltd.")
     }
@@ -64,7 +62,7 @@ struct VendorDBTests {
         // without the " - OBSOLETE" suffix that lives in the raw TSV.
         #expect(VendorDB.name(for: 0x041C) == "Altera Corp.")
         #expect(VendorDB.name(for: 0x0CC1) == "Given Imaging LTD")
-        #expect(VendorDB.name(for: 0x0001) != nil) // Fry's Electronics
+        #expect(VendorDB.name(for: 0x0001) != nil)  // Fry's Electronics
     }
 
     @Test("obsolete vendors are registered")
@@ -86,8 +84,7 @@ struct VendorDBTests {
     func labelIncludesNameAndHex() {
         #expect(VendorDB.label(for: 0x05AC) == "Apple (0x05AC)")
         #expect(
-            VendorDB.label(for: 0x0BDA) ==
-            "Realtek Semiconductor Corp. (0x0BDA)"
+            VendorDB.label(for: 0x0BDA) == "Realtek Semiconductor Corp. (0x0BDA)"
         )
     }
 

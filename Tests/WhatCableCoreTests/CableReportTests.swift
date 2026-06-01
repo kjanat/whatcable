@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import WhatCableCore
 
 @Suite("Cable Report")
@@ -18,7 +19,7 @@ struct CableReportTests {
             // latency 0001 (~1 m). A bare-zero VDO would trip the
             // reservedCableLatencyEncoding warning even though these
             // tests aren't about trust signals.
-            (0b10 << 5) | 0b011 | (1 << 13)
+            (0b10 << 5) | 0b011 | (1 << 13),
         ]
     ) -> USBPDSOP {
         USBPDSOP(
@@ -88,8 +89,8 @@ struct CableReportTests {
         let comps = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false))
         #expect(comps.host == "github.com")
         #expect(comps.path == "/darrylmorley/whatcable/issues/new")
-        let items = Dictionary(uniqueKeysWithValues:
-            (comps.queryItems ?? []).map { ($0.name, $0.value ?? "") }
+        let items = Dictionary(
+            uniqueKeysWithValues: (comps.queryItems ?? []).map { ($0.name, $0.value ?? "") }
         )
         #expect(items["template"] == "cable-report.yml")
         #expect(items["labels"] == "cable-report")
@@ -161,14 +162,14 @@ struct CableReportTests {
             bcdDevice: 0,
             vdos: [
                 (3 << 27) | UInt32(0x05AC),
-                0x00012345,             // Cert Stat with XID
+                0x0001_2345,  // Cert Stat with XID
                 0,
-                (0b10 << 5) | 0b011 | (1 << 13)
+                (0b10 << 5) | 0b011 | (1 << 13),
             ],
             specRevision: 3
         )
         let payload = CableReport.payload(for: id)!
-        #expect(payload.cable.usbifCertID == 0x00012345)
+        #expect(payload.cable.usbifCertID == 0x0001_2345)
         let md = payload.markdown
         #expect(md.contains("USB-IF certification ID"))
         #expect(md.contains("0x00012345"))
@@ -200,7 +201,7 @@ struct CableReportTests {
             productID: 0,
             bcdDevice: 0,
             vdos: [
-                (3 << 27) | UInt32(0x05AC) // only ID Header, no Cert Stat
+                (3 << 27) | UInt32(0x05AC)  // only ID Header, no Cert Stat
             ],
             specRevision: 3
         )
@@ -320,9 +321,9 @@ struct CableReportTests {
                 (3 << 27) | UInt32(0x05AC),
                 0,
                 0,
-                (0b10 << 5) | 0b011 | (1 << 13), // valid 1m latency
-                0xDEADBEEF,
-                0xCAFEBABE
+                (0b10 << 5) | 0b011 | (1 << 13),  // valid 1m latency
+                0xDEAD_BEEF,
+                0xCAFE_BABE,
             ],
             specRevision: 3
         )

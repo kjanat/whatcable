@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("Charging Diagnostic")
@@ -38,7 +39,8 @@ struct ChargingDiagnosticTests {
 
     /// Build a USB-PD source advertising up to `maxW` and currently negotiating `winningW`.
     private func usbPD(maxW: Int, winningW: Int) -> PowerSource {
-        let winning = PowerOption(voltageMV: 20_000, maxCurrentMA: winningW * 50, maxPowerMW: winningW * 1000)
+        let winning = PowerOption(
+            voltageMV: 20_000, maxCurrentMA: winningW * 50, maxPowerMW: winningW * 1000)
         let max = PowerOption(voltageMV: 20_000, maxCurrentMA: maxW * 50, maxPowerMW: maxW * 1000)
         return PowerSource(
             id: 1, name: "USB-PD", parentPortType: 2, parentPortNumber: 1,
@@ -47,7 +49,8 @@ struct ChargingDiagnosticTests {
     }
 
     private func brickID(maxW: Int, winningW: Int) -> PowerSource {
-        let winning = PowerOption(voltageMV: 20_000, maxCurrentMA: winningW * 50, maxPowerMW: winningW * 1000)
+        let winning = PowerOption(
+            voltageMV: 20_000, maxCurrentMA: winningW * 50, maxPowerMW: winningW * 1000)
         let max = PowerOption(voltageMV: 20_000, maxCurrentMA: maxW * 50, maxPowerMW: maxW * 1000)
         return PowerSource(
             id: 2, name: "Brick ID", parentPortType: 0x11, parentPortNumber: 1,
@@ -73,9 +76,9 @@ struct ChargingDiagnosticTests {
         let cableVDO: UInt32 = {
             switch watts {
             case 100: return 0b011 | (1 << 4) | (2 << 5) | validLatency  // 5A passive
-            case 60:  return 0b000 | (1 << 5)            | validLatency  // 3A USB2
+            case 60: return 0b000 | (1 << 5) | validLatency  // 3A USB2
             case 240: return 0b011 | (2 << 5) | (3 << 9) | validLatency  // 5A @ 50V (EPR)
-            default:  fatalError("unhandled fixture wattage \(watts)")
+            default: fatalError("unhandled fixture wattage \(watts)")
             }
         }()
         // ID header: ufpProductType = 3 (passive cable), bits 29..27 = 011
@@ -220,7 +223,8 @@ struct ChargingDiagnosticTests {
             identities: []
         )
         if case .fine = diag?.bottleneck { return }
-        Issue.record("expected .fine without cable identity, got \(String(describing: diag?.bottleneck))")
+        Issue.record(
+            "expected .fine without cable identity, got \(String(describing: diag?.bottleneck))")
     }
 
     @Test("Brick ID power source is valid for MagSafe")
@@ -231,7 +235,8 @@ struct ChargingDiagnosticTests {
             identities: []
         )
         guard case .fine(let n) = diag?.bottleneck else {
-            Issue.record("expected .fine from Brick ID source, got \(String(describing: diag?.bottleneck))")
+            Issue.record(
+                "expected .fine from Brick ID source, got \(String(describing: diag?.bottleneck))")
             return
         }
         #expect(n == 140)
@@ -245,7 +250,8 @@ struct ChargingDiagnosticTests {
             identities: [cableIdentity(watts: 100)]
         )
         guard case .fine(let n) = diag?.bottleneck else {
-            Issue.record("expected .fine from USB-PD source, got \(String(describing: diag?.bottleneck))")
+            Issue.record(
+                "expected .fine from USB-PD source, got \(String(describing: diag?.bottleneck))")
             return
         }
         #expect(n == 96)
@@ -390,7 +396,8 @@ struct ChargingDiagnosticTests {
             identities: [cableIdentity(watts: 100)]
         )
         guard case .fine(let n) = diag?.bottleneck else {
-            Issue.record("expected .fine from USB-PD source, got \(String(describing: diag?.bottleneck))")
+            Issue.record(
+                "expected .fine from USB-PD source, got \(String(describing: diag?.bottleneck))")
             return
         }
         #expect(n == 96)
@@ -417,7 +424,9 @@ struct ChargingDiagnosticTests {
             wattageSource: wattageSource
         )
         guard case .chargerLimit(let w) = diag?.bottleneck else {
-            Issue.record("expected .chargerLimit from adapter fallback, got \(String(describing: diag?.bottleneck))")
+            Issue.record(
+                "expected .chargerLimit from adapter fallback, got \(String(describing: diag?.bottleneck))"
+            )
             return
         }
         #expect(w == 96)
@@ -530,7 +539,9 @@ struct ChargingDiagnosticTests {
             wattageSource: wattageSource
         )
         guard case .chargerLimit(let w) = diag?.bottleneck else {
-            Issue.record("expected .chargerLimit from adapter fallback, got \(String(describing: diag?.bottleneck))")
+            Issue.record(
+                "expected .chargerLimit from adapter fallback, got \(String(describing: diag?.bottleneck))"
+            )
             return
         }
         #expect(w == 100)

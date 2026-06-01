@@ -14,7 +14,8 @@ public enum AppleSmartBatteryReader {
     public static func read() -> Result {
         let matching = IOServiceMatching("AppleSmartBattery")
         var iter: io_iterator_t = 0
-        guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter) == KERN_SUCCESS else {
+        guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter) == KERN_SUCCESS
+        else {
             return Result(isDesktopMac: true, federatedIdentities: [], battery: nil)
         }
         defer { IOObjectRelease(iter) }
@@ -32,7 +33,8 @@ public enum AppleSmartBatteryReader {
         // typically when the service is being torn down mid-read. The
         // per-key call has no such failure path. See issue #181.
         func read(_ key: String) -> Any? {
-            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                .takeRetainedValue()
         }
 
         let batteryInstalled = boolVal(read("BatteryInstalled"))
@@ -45,7 +47,9 @@ public enum AppleSmartBatteryReader {
         return Result(isDesktopMac: false, federatedIdentities: fedDetails, battery: battery)
     }
 
-    private static func parseBattery(_ read: (String) -> Any?, federatedIdentities: [FederatedIdentity]) -> AppleSmartBattery {
+    private static func parseBattery(
+        _ read: (String) -> Any?, federatedIdentities: [FederatedIdentity]
+    ) -> AppleSmartBattery {
         AppleSmartBattery(
             batteryInstalled: true,
             deviceName: (read("DeviceName") as? String) ?? "",
@@ -189,7 +193,8 @@ public enum AppleSmartBatteryReader {
         guard let arr = value as? [[String: Any]] else { return [] }
         return arr.compactMap { entry in
             guard let mv = (entry["MaxVoltage"] as? NSNumber)?.intValue,
-                  let ma = (entry["MaxCurrent"] as? NSNumber)?.intValue else { return nil }
+                let ma = (entry["MaxCurrent"] as? NSNumber)?.intValue
+            else { return nil }
             return AdapterHVCEntry(voltageMV: mv, currentMA: ma)
         }
     }
@@ -217,7 +222,8 @@ public enum AppleSmartBatteryReader {
             systemLoadAccumulatorCount: intVal(d["SystemLoadAccumulatorCount"]),
             batteryPowerAccumulatorCount: intVal(d["BatteryPowerAccumulatorCount"]),
             batteryDischargeAccumulatorCount: intVal(d["BatteryDischargeAccumulatorCount"]),
-            adapterEfficiencyLossAccumulatorCount: intVal(d["AdapterEfficiencyLossAccumulatorCount"])
+            adapterEfficiencyLossAccumulatorCount: intVal(
+                d["AdapterEfficiencyLossAccumulatorCount"])
         )
     }
 
@@ -296,15 +302,16 @@ public enum AppleSmartBatteryReader {
             let role = (entry["FedPortPowerRole"] as? NSNumber)?.intValue ?? 0
             let drp = (entry["FedDualRolePower"] as? NSNumber)?.intValue ?? 0
             let ext = (entry["FedExternalConnected"] as? NSNumber)?.intValue ?? 0
-            results.append(FederatedIdentity(
-                portIndex: offset + 1,
-                vendorID: vid,
-                productID: pid,
-                pdSpecRevision: pdRev,
-                powerRole: role,
-                dualRolePower: drp != 0,
-                externalConnected: ext != 0
-            ))
+            results.append(
+                FederatedIdentity(
+                    portIndex: offset + 1,
+                    vendorID: vid,
+                    productID: pid,
+                    pdSpecRevision: pdRev,
+                    powerRole: role,
+                    dualRolePower: drp != 0,
+                    externalConnected: ext != 0
+                ))
         }
         return results
     }

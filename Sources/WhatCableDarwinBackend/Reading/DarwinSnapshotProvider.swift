@@ -1,6 +1,6 @@
 import Foundation
-import os.log
 import WhatCableCore
+import os.log
 
 /// macOS implementation of `CableSnapshotProvider`. Wraps the four IOKit
 /// watcher classes and assembles their state into a `CableSnapshot`.
@@ -134,4 +134,3 @@ public final class DarwinSnapshotProvider: CableSnapshotProvider, @unchecked Sen
 public func makeDefaultSnapshotProvider() -> any CableSnapshotProvider {
     DarwinSnapshotProvider()
 }
-

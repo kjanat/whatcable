@@ -1,6 +1,6 @@
 import SwiftUI
-import WidgetKit
 import WhatCableCore
+import WidgetKit
 
 // MARK: - Main entry view for static widget (small + medium + large)
 
@@ -27,7 +27,8 @@ struct CableWidgetEntryView: View {
 
     private func resolveSmallPort(_ snapshot: WidgetSnapshot) -> WidgetSnapshot.PortEntry {
         if let pinned = entry.configuration.selectedPort,
-           let match = snapshot.ports.first(where: { String($0.id) == pinned.id }) {
+            let match = snapshot.ports.first(where: { String($0.id) == pinned.id })
+        {
             return match
         }
         return mostInteresting(snapshot.ports)
@@ -303,10 +304,13 @@ struct EmptyStateView: View {
                 .foregroundStyle(.secondary)
             Text(String(localized: "No cable data", bundle: _coreLocalizedBundle))
                 .font(.headline)
-            Text(String(localized: "Open WhatCable to start monitoring.", bundle: _coreLocalizedBundle))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            Text(
+                String(
+                    localized: "Open WhatCable to start monitoring.", bundle: _coreLocalizedBundle)
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
         }
     }
 }
@@ -335,20 +339,21 @@ func mostInteresting(_ ports: [WidgetSnapshot.PortEntry]) -> WidgetSnapshot.Port
         let bRank = b.status.interestRank
         if aRank != bRank { return aRank > bRank }
         return a.id < b.id
-    }.first ?? WidgetSnapshot.PortEntry(
-        id: 0,
-        portName: "USB-C",
-        status: .empty,
-        headline: "Nothing connected",
-        subtitle: "Plug a cable in to see what it can do.",
-        topBullet: nil,
-        iconName: "powerplug",
-        deviceCount: 0
-    )
+    }.first
+        ?? WidgetSnapshot.PortEntry(
+            id: 0,
+            portName: "USB-C",
+            status: .empty,
+            headline: "Nothing connected",
+            subtitle: "Plug a cable in to see what it can do.",
+            topBullet: nil,
+            iconName: "powerplug",
+            deviceCount: 0
+        )
 }
 
-private extension WidgetSnapshot.Status {
-    var interestRank: Int {
+extension WidgetSnapshot.Status {
+    fileprivate var interestRank: Int {
         switch self {
         case .thunderboltCable: return 5
         case .displayCable: return 4

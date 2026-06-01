@@ -1,5 +1,10 @@
 import Foundation
+
+#if canImport(Darwin)
 import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 
 /// ANSI color helpers. Disabled automatically when stdout isn't a TTY
 /// (piped output, redirected to file) or when NO_COLOR is set —

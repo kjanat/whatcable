@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("PortControllerInfo content-join")
@@ -7,14 +8,18 @@ struct PowerControllerPortJoinTests {
 
     /// A power source with a winning contract of `winningWatts` mW on the given
     /// port. `id` lets two sources share a port (USB-PD + Brick ID).
-    private func source(port: Int, type: Int = 2, winningWatts: Int?, id: UInt64? = nil, name: String = "USB-PD") -> PowerSource {
+    private func source(
+        port: Int, type: Int = 2, winningWatts: Int?, id: UInt64? = nil, name: String = "USB-PD"
+    ) -> PowerSource {
         PowerSource(
             id: id ?? UInt64(port),
             name: name,
             parentPortType: type,
             parentPortNumber: port,
             options: [],
-            winning: winningWatts.map { PowerOption(voltageMV: 20000, maxCurrentMA: 5000, maxPowerMW: $0) }
+            winning: winningWatts.map {
+                PowerOption(voltageMV: 20000, maxCurrentMA: 5000, maxPowerMW: $0)
+            }
         )
     }
 
@@ -74,11 +79,14 @@ struct PowerControllerPortJoinTests {
     func tolerance() {
         let sources = [source(port: 4, winningWatts: 44_800)]
         // 44850 vs 44800 = 50 mW, inside the 1.5 W tolerance.
-        #expect(PowerControllerPortJoin.portKeysByContent(
-            controllerMaxPowerMW: [44_850], sources: sources) == [0: "2/4"])
+        #expect(
+            PowerControllerPortJoin.portKeysByContent(
+                controllerMaxPowerMW: [44_850], sources: sources) == [0: "2/4"])
         // 40000 vs 44800 = 4.8 W, well outside: no guess.
-        #expect(PowerControllerPortJoin.portKeysByContent(
-            controllerMaxPowerMW: [40_000], sources: sources).isEmpty)
+        #expect(
+            PowerControllerPortJoin.portKeysByContent(
+                controllerMaxPowerMW: [40_000], sources: sources
+            ).isEmpty)
     }
 
     @Test("A source with no winning contract is not a match target")

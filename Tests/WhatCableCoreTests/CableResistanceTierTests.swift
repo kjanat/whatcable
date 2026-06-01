@@ -1,11 +1,13 @@
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("Cable resistance tier (spec-anchored)")
 struct CableResistanceTierTests {
 
     private func estimate(_ mOhm: Double, _ status: CableResistanceEstimate.Status = .stable)
-        -> CableResistanceEstimate {
+        -> CableResistanceEstimate
+    {
         CableResistanceEstimate(milliohms: mOhm, sampleCount: 40, rSquared: 0.9, status: status)
     }
 

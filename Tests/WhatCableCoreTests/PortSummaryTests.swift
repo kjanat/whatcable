@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 /// Pins the user-facing headline strings produced by PortSummary so refactors
@@ -228,7 +229,8 @@ struct PortSummaryTests {
         )
         let summary = PortSummary(port: port, identities: [cable])
         #expect(
-            summary.bullets.contains(where: { $0.contains("e-marker") && $0.contains("advertises") }),
+            summary.bullets.contains(where: { $0.contains("e-marker") && $0.contains("advertises") }
+            ),
             "expected an e-marker bullet, got bullets: \(summary.bullets)"
         )
     }
@@ -325,7 +327,8 @@ struct PortSummaryTests {
         )
         let summary = PortSummary(port: port, identities: [cable])
         #expect(
-            summary.bullets.contains(where: { $0.contains("e-marker") && $0.contains("advertises") }),
+            summary.bullets.contains(where: { $0.contains("e-marker") && $0.contains("advertises") }
+            ),
             "expected e-marker bullet on PD-capable port, got: \(summary.bullets)"
         )
     }
@@ -426,7 +429,7 @@ struct PortSummaryTests {
                 (3 << 27) | UInt32(0x05AC),
                 0,
                 0,
-                UInt32(0b011) | UInt32(2 << 5) | UInt32(1 << 13) // USB4 Gen3, 5A, ~1m
+                UInt32(0b011) | UInt32(2 << 5) | UInt32(1 << 13),  // USB4 Gen3, 5A, ~1m
             ],
             specRevision: 3
         )
@@ -434,7 +437,7 @@ struct PortSummaryTests {
             id: 100, endpoint: .sop,
             parentPortType: 2, parentPortNumber: 1,
             vendorID: 0x05AC, productID: 0, bcdDevice: 0,
-            vdos: [(2 << 27) | UInt32(0x05AC)], // USB Peripheral
+            vdos: [(2 << 27) | UInt32(0x05AC)],  // USB Peripheral
             specRevision: 3
         )
         let summary = PortSummary(
@@ -523,7 +526,8 @@ struct PortSummaryTests {
         let dpBullet = summary.bullets.first { $0.contains("DisplayPort") }
         #expect(dpBullet != nil)
         #expect(dpBullet!.contains("2 DP lanes"), "Expected 2-lane info, got: \(dpBullet!)")
-        #expect(!dpBullet!.contains("no USB3"), "2-lane link must not claim 'no USB3': \(dpBullet!)")
+        #expect(
+            !dpBullet!.contains("no USB3"), "2-lane link must not claim 'no USB3': \(dpBullet!)")
     }
 
     @Test("DP lane count is determined without relying on a pin assignment")
@@ -601,7 +605,8 @@ struct PortSummaryTests {
         let port = makePort(connected: true, active: [], supported: ["CC"])
         let source = usbPD(maxW: 20, winningW: 20)
         let summary = PortSummary(port: port, sources: [source])
-        #expect(summary.status == .charging,
+        #expect(
+            summary.status == .charging,
             "Charger present with no active transports should be .charging, not .unknown")
     }
 
@@ -613,7 +618,8 @@ struct PortSummaryTests {
         let port = makePort(connected: true, active: [], supported: [])
         let summary = PortSummary(port: port)
         #expect(summary.status == .unknown)
-        #expect(summary.bullets.isEmpty,
+        #expect(
+            summary.bullets.isEmpty,
             "Pure .unknown with no data should have empty bullets, got: \(summary.bullets)")
     }
 
@@ -738,7 +744,8 @@ struct PortSummaryTests {
         )
         let summary = PortSummary(port: port, usb3Transports: [transport])
         #expect(
-            summary.bullets.contains(where: { $0.contains("USB 3.2") || $0.contains("SuperSpeed") }) == false,
+            summary.bullets.contains(where: { $0.contains("USB 3.2") || $0.contains("SuperSpeed") })
+                == false,
             "USB3 bullet should not appear when transportsActive has no USB3, got: \(summary.bullets)"
         )
     }
@@ -763,7 +770,8 @@ struct PortSummaryTests {
         )
         let summary = PortSummary(port: port, usb3Transports: [transport])
         #expect(
-            summary.bullets.contains(where: { $0.contains("USB 3.2") || $0.contains("SuperSpeed") }) == false,
+            summary.bullets.contains(where: { $0.contains("USB 3.2") || $0.contains("SuperSpeed") })
+                == false,
             "USB3 bullet must not appear for a USB2-only link, got: \(summary.bullets)"
         )
         #expect(
@@ -1014,7 +1022,9 @@ struct PortSummaryTests {
         #expect(summary.status == .thunderboltCable)
         #expect(summary.headline == "Thunderbolt / USB4")
         #expect(
-            summary.bullets.contains(where: { $0.contains("USB4 Gen 4 (80 Gbps, Thunderbolt 5 class)") }),
+            summary.bullets.contains(where: {
+                $0.contains("USB4 Gen 4 (80 Gbps, Thunderbolt 5 class)")
+            }),
             "Cable speed bullet should show Gen 4, got: \(summary.bullets)"
         )
         #expect(
@@ -1022,7 +1032,9 @@ struct PortSummaryTests {
             "Cable maker bullet should show Apple, got: \(summary.bullets)"
         )
         #expect(
-            summary.bullets.contains(where: { $0.contains("240W") && $0.contains("USB-PD caps at 48V") }),
+            summary.bullets.contains(where: {
+                $0.contains("240W") && $0.contains("USB-PD caps at 48V")
+            }),
             "Cable power bullet should show the 240W deliverable with the 48V cap note, got: \(summary.bullets)"
         )
     }
@@ -1095,8 +1107,11 @@ struct PortSummaryTests {
             federatedIdentities: [fed(portIndex: 1, vid: 11009)]
         )
         let bullet = summary.bullets.first { $0.contains("Charger identified as") }
-        #expect(bullet != nil, "Expected hedged 'Charger identified as' bullet, got: \(summary.bullets)")
-        #expect(bullet!.contains("Zimi") && bullet!.contains("0x2B01"),
+        #expect(
+            bullet != nil, "Expected hedged 'Charger identified as' bullet, got: \(summary.bullets)"
+        )
+        #expect(
+            bullet!.contains("Zimi") && bullet!.contains("0x2B01"),
             "Expected Zimi Corporation (0x2B01), got: \(bullet ?? "<nil>")")
     }
 
@@ -1113,8 +1128,11 @@ struct PortSummaryTests {
             federatedIdentities: [fed(portIndex: 1, vid: 0x05AC)],
             adapter: adapter(manufacturer: "Apple Inc.", name: "140W USB-C Power Adapter")
         )
-        let chargerLines = summary.bullets.filter { $0.starts(with: "Charger:") || $0.contains("Charger identified as") }
-        #expect(chargerLines.count == 1,
+        let chargerLines = summary.bullets.filter {
+            $0.starts(with: "Charger:") || $0.contains("Charger identified as")
+        }
+        #expect(
+            chargerLines.count == 1,
             "Expected exactly one charger-identity line, got: \(chargerLines)")
         #expect(chargerLines.first == "Charger: Apple Inc. 140W USB-C Power Adapter")
     }
@@ -1154,7 +1172,9 @@ struct PortSummaryTests {
             federatedIdentities: [fed(portIndex: 1, vid: 0xCAFE)]  // not in either DB
         )
         #expect(
-            !summary.bullets.contains(where: { $0.contains("Charger identified as") || $0.contains("Connected device") }),
+            !summary.bullets.contains(where: {
+                $0.contains("Charger identified as") || $0.contains("Connected device")
+            }),
             "No identity bullet expected for unknown VID, got: \(summary.bullets)"
         )
     }
@@ -1171,7 +1191,9 @@ struct PortSummaryTests {
             federatedIdentities: [fed(portIndex: 1, vid: 11009)]
         )
         let bullet = summary.bullets.first { $0.contains("Connected device") }
-        #expect(bullet != nil, "Expected 'Connected device' line for peripheral, got: \(summary.bullets)")
+        #expect(
+            bullet != nil,
+            "Expected 'Connected device' line for peripheral, got: \(summary.bullets)")
     }
 
     @Test("Adapter with nil manufacturer does not emit Charger bullet")
@@ -1242,7 +1264,9 @@ struct PortSummaryTests {
         #expect(identityIdx != nil, "Identity bullet should appear")
         #expect(wattageIdx != nil, "Wattage bullet should appear")
         if let i = identityIdx, let w = wattageIdx {
-            #expect(i < w, "Identity (\(i)) should come before wattage (\(w)) in bullets: \(summary.bullets)")
+            #expect(
+                i < w,
+                "Identity (\(i)) should come before wattage (\(w)) in bullets: \(summary.bullets)")
         }
     }
 }

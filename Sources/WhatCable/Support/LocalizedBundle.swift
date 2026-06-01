@@ -8,7 +8,8 @@ func setAppLocale(_ identifier: String) {
     if identifier.isEmpty {
         _appLocalizedBundle = .module
     } else if let url = Bundle.module.url(forResource: identifier, withExtension: "lproj"),
-              let b = Bundle(url: url) {
+        let b = Bundle(url: url)
+    {
         _appLocalizedBundle = b
     } else {
         _appLocalizedBundle = .module

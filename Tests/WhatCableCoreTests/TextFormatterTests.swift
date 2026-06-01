@@ -155,8 +155,8 @@ struct TextFormatterTests {
         // VDO2 with optical + retimer + isolated + USB4 supported (bit 8 = 0).
         var vdo4: UInt32 = 0
         vdo4 |= UInt32(1) << 10  // optical
-        vdo4 |= UInt32(1) << 9   // retimer
-        vdo4 |= UInt32(1) << 2   // isolated
+        vdo4 |= UInt32(1) << 9  // retimer
+        vdo4 |= UInt32(1) << 2  // isolated
         // bits 8 / 5 / 4 left at 0 = USB4 / USB 3.2 / USB 2.0 supported.
         let vdo3: UInt32 = UInt32(0b011) | UInt32(2 << 5) | UInt32(1 << 13) | UInt32(0b10 << 11)
         let active = USBPDSOP(

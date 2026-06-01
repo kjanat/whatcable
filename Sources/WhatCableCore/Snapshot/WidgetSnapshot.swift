@@ -144,7 +144,8 @@ public struct WidgetSnapshot: Codable, Equatable {
             adapterDescription = try c.decodeIfPresent(String.self, forKey: .adapterDescription)
             systemPowerInWatts = try c.decodeIfPresent(Double.self, forKey: .systemPowerInWatts)
             perPortWatts = try c.decodeIfPresent([PortPowerEntry].self, forKey: .perPortWatts)
-            recentSystemPower = try c.decodeIfPresent([Double].self, forKey: .recentSystemPower) ?? []
+            recentSystemPower =
+                try c.decodeIfPresent([Double].self, forKey: .recentSystemPower) ?? []
         }
     }
 
@@ -155,7 +156,8 @@ public struct WidgetSnapshot: Codable, Equatable {
         public let watts: Double
         public let recentSamples: [Double]
 
-        public init(portKey: String, portName: String, watts: Double, recentSamples: [Double] = []) {
+        public init(portKey: String, portName: String, watts: Double, recentSamples: [Double] = [])
+        {
             self.portKey = portKey
             self.portName = portName
             self.watts = watts
@@ -197,9 +199,15 @@ extension WidgetSnapshot {
     /// matching team-prefixed App Group entitlement; no provisioning profile
     /// is required for Developer ID distribution on macOS.
     public static var sharedFileURL: URL? {
-        FileManager.default.containerURL(
+        #if canImport(Darwin)
+        return FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: appGroupID
         )?.appendingPathComponent("widgetSnapshot.json")
+        #else
+        // App Groups / WidgetKit are macOS-only; there is no shared widget
+        // container on Linux.
+        return nil
+        #endif
     }
 }
 

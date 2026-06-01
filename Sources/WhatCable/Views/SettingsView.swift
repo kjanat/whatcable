@@ -28,7 +28,8 @@ struct SettingsView: View {
         HStack {
             Image(systemName: "gearshape")
                 .scaledFont(.title2)
-            Text(String(localized: "Settings", bundle: _appLocalizedBundle)).scaledFont(.headline, weight: .bold)
+            Text(String(localized: "Settings", bundle: _appLocalizedBundle)).scaledFont(
+                .headline, weight: .bold)
             Spacer()
             Button(String(localized: "Done", bundle: _appLocalizedBundle), action: dismiss)
                 .keyboardShortcut(.defaultAction)
@@ -42,17 +43,31 @@ struct SettingsForm: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             section(String(localized: "Behavior", bundle: _appLocalizedBundle)) {
-                Toggle(String(localized: "Launch at login", bundle: _appLocalizedBundle), isOn: $settings.launchAtLogin)
-                Toggle(String(localized: "Show in menu bar", bundle: _appLocalizedBundle), isOn: $settings.useMenuBarMode)
-                Text(settings.useMenuBarMode
-                     ? String(localized: "Lives in the menu bar with no Dock icon.", bundle: _appLocalizedBundle)
-                     : String(localized: "Runs as a regular Dock app with a window.", bundle: _appLocalizedBundle))
-                    .scaledFont(.caption)
-                    .foregroundStyle(.secondary)
+                Toggle(
+                    String(localized: "Launch at login", bundle: _appLocalizedBundle),
+                    isOn: $settings.launchAtLogin)
+                Toggle(
+                    String(localized: "Show in menu bar", bundle: _appLocalizedBundle),
+                    isOn: $settings.useMenuBarMode)
+                Text(
+                    settings.useMenuBarMode
+                        ? String(
+                            localized: "Lives in the menu bar with no Dock icon.",
+                            bundle: _appLocalizedBundle)
+                        : String(
+                            localized: "Runs as a regular Dock app with a window.",
+                            bundle: _appLocalizedBundle)
+                )
+                .scaledFont(.caption)
+                .foregroundStyle(.secondary)
             }
             section(String(localized: "Display", bundle: _appLocalizedBundle)) {
-                Toggle(String(localized: "Show technical details", bundle: _appLocalizedBundle), isOn: $settings.showTechnicalDetails)
-                Toggle(String(localized: "Hide empty ports", bundle: _appLocalizedBundle), isOn: $settings.hideEmptyPorts)
+                Toggle(
+                    String(localized: "Show technical details", bundle: _appLocalizedBundle),
+                    isOn: $settings.showTechnicalDetails)
+                Toggle(
+                    String(localized: "Hide empty ports", bundle: _appLocalizedBundle),
+                    isOn: $settings.hideEmptyPorts)
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text(String(localized: "Font size", bundle: _appLocalizedBundle))
@@ -70,7 +85,10 @@ struct SettingsForm: View {
                     }
                 }
                 .padding(.top, 4)
-                Picker(String(localized: "Language", bundle: _appLocalizedBundle), selection: $settings.preferredLanguage) {
+                Picker(
+                    String(localized: "Language", bundle: _appLocalizedBundle),
+                    selection: $settings.preferredLanguage
+                ) {
                     Text(String(localized: "System Default", bundle: _appLocalizedBundle)).tag("")
                     Divider()
                     Text(verbatim: "Deutsch").tag("de")
@@ -93,14 +111,17 @@ struct SettingsForm: View {
                 .padding(.top, 4)
             }
             section(String(localized: "Notifications", bundle: _appLocalizedBundle)) {
-                Toggle(String(localized: "Notify on cable changes", bundle: _appLocalizedBundle), isOn: $settings.notifyOnChanges)
+                Toggle(
+                    String(localized: "Notify on cable changes", bundle: _appLocalizedBundle),
+                    isOn: $settings.notifyOnChanges)
             }
             TestKitSettingsSection()
             section(String(localized: "Pro", bundle: _appLocalizedBundle)) {
                 let builders = PluginRegistry.shared.settingsProSectionBuilders
                 if builders.isEmpty {
-                    Link(String(localized: "Upgrade to WhatCable Pro", bundle: _appLocalizedBundle),
-                         destination: URL(string: "https://www.whatcable.uk/pro")!)
+                    Link(
+                        String(localized: "Upgrade to WhatCable Pro", bundle: _appLocalizedBundle),
+                        destination: URL(string: "https://www.whatcable.uk/pro")!)
                 } else {
                     ForEach(builders.indices, id: \.self) { i in
                         builders[i]()
@@ -111,7 +132,9 @@ struct SettingsForm: View {
     }
 
     @ViewBuilder
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content)
+        -> some View
+    {
         VStack(alignment: .leading, spacing: 10) {
             Text(title.uppercased())
                 .scaledFont(.caption, weight: .semibold)

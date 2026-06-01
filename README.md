@@ -180,6 +180,8 @@ swift test                   # run the test suite
 
 Requires Swift 5.9+ (Xcode 15+). Note: `swift run WhatCable` launches a working dev build but without the widget extension or proper `.app` bundle. For a distributable build, use the build scripts below.
 
+On **Linux**, `Package.swift` selects a different target set (no AppKit/IOKit/WidgetKit): `swift build` produces `whatcable-cli` and `whatcable-gui`. See [docs/LINUX.md](docs/LINUX.md) for prerequisites (Swift 6.0+, `libsqlite3-dev`).
+
 ## Build a distributable .app
 
 ```bash
@@ -235,9 +237,31 @@ cp .env.example .env
 - **PD spec coverage:** the decoder is aligned to USB-PD R3.2 V1.2 (March 2026). Earlier 3.0 / 3.1 cables work fine.
 - **Vendor name lookup uses a bundled database** (thousands of USB-IF entries plus the community usb.ids list). VIDs assigned after the bundled snapshot will show as "Unregistered / unknown" and trip a trust-signal flag until the database is refreshed.
 
-## Linux port
+## Linux
 
-[@abrauchli](https://github.com/abrauchli) built a Rust port for Linux called [usbeehive](https://github.com/abrauchli/usbeehive). Install it with `cargo install usbeehive`. It reads from the kernel's typec sysfs interface rather than IOKit, so it's an independent implementation rather than a fork. It started life as a `whatcable` crate on crates.io before being renamed to avoid confusion with this repo. He's also working on [usbee](https://github.com/abrauchli/usbee), a GNOME UI for it (early stage, but the basics work).
+WhatCable now builds natively on Linux from this same repo. The shared engine
+(`WhatCableCore`) is platform-agnostic; a sysfs-backed `WhatCableLinuxBackend`
+replaces the macOS IOKit backend, reading the kernel's USB Type-C, USB-PD, USB,
+power-supply, and Thunderbolt trees and producing the same `CableSnapshot`. The
+CLI output and JSON schema are identical across platforms.
+
+```bash
+sudo apt-get install libsqlite3-dev   # (or sqlite-devel / sqlite-dev)
+swift build -c release                 # builds whatcable-cli + whatcable-gui
+.build/release/whatcable-cli           # one-shot port/cable/charger view
+.build/release/whatcable-cli --watch   # live view
+.build/release/whatcable-gui           # local browser dashboard (127.0.0.1)
+```
+
+Requires Swift 6.0+, the SQLite dev headers, and a kernel exposing
+`/sys/class/typec`. The menu bar GUI and WidgetKit widget remain macOS-only
+(AppKit/WidgetKit have no Linux equivalent); on Linux the graphical view is a
+local web dashboard served by `whatcable-gui`. See **[docs/LINUX.md](docs/LINUX.md)**
+for the full feature/limitation matrix and architecture notes.
+
+### Independent Rust port
+
+[@abrauchli](https://github.com/abrauchli) also built a separate Rust port for Linux called [usbeehive](https://github.com/abrauchli/usbeehive). Install it with `cargo install usbeehive`. It reads from the kernel's typec sysfs interface rather than IOKit, so it's an independent implementation rather than a fork. It started life as a `whatcable` crate on crates.io before being renamed to avoid confusion with this repo. He's also working on [usbee](https://github.com/abrauchli/usbee), a GNOME UI for it (early stage, but the basics work).
 
 ## Privacy
 

@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("USB port matching")
@@ -58,7 +59,7 @@ struct USBPortMatchingTests {
         let port = makePort(serviceName: "Port-USB-C@1")
         let devices = [
             makeDevice(id: 1, busIndex: 1),
-            makeDevice(id: 2, busIndex: 2)
+            makeDevice(id: 2, busIndex: 2),
         ]
 
         #expect(port.matchingDevices(from: devices) == [])

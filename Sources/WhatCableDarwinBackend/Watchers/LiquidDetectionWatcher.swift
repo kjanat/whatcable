@@ -67,8 +67,14 @@ public final class LiquidDetectionWatcher: ObservableObject {
     }
 
     public func stop() {
-        if addedIterator != 0 { IOObjectRelease(addedIterator); addedIterator = 0 }
-        if removedIterator != 0 { IOObjectRelease(removedIterator); removedIterator = 0 }
+        if addedIterator != 0 {
+            IOObjectRelease(addedIterator)
+            addedIterator = 0
+        }
+        if removedIterator != 0 {
+            IOObjectRelease(removedIterator)
+            removedIterator = 0
+        }
         if let port = notifyPort {
             IONotificationPortDestroy(port)
             notifyPort = nil
@@ -79,7 +85,9 @@ public final class LiquidDetectionWatcher: ObservableObject {
     public func refresh() {
         statuses.removeAll()
         var iter: io_iterator_t = 0
-        if IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("AppleHPMLDCMType2"), &iter) == KERN_SUCCESS {
+        if IOServiceGetMatchingServices(
+            kIOMainPortDefault, IOServiceMatching("AppleHPMLDCMType2"), &iter) == KERN_SUCCESS
+        {
             handleAdded(iter)
             IOObjectRelease(iter)
         }
@@ -102,7 +110,8 @@ public final class LiquidDetectionWatcher: ObservableObject {
         while case let service = IOIteratorNext(iterator), service != 0 {
             defer { IOObjectRelease(service) }
             func read(_ key: String) -> Any? {
-                IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+                IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                    .takeRetainedValue()
             }
             let portIndex = wcPortIndex(read: read, service: service)
             let portType = wcPortType(read: read, service: service)
@@ -114,10 +123,12 @@ public final class LiquidDetectionWatcher: ObservableObject {
 
     private func makeUpdate(from service: io_service_t) -> LiquidDetectionUpdate? {
         func read(_ key: String) -> Any? {
-            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                .takeRetainedValue()
         }
 
-        let state = (read("StateDescription") as? String)
+        let state =
+            (read("StateDescription") as? String)
             ?? read("State").map { String(wcInt($0)) }
             ?? "Unknown"
         let status = LiquidDetectionStatus(

@@ -34,20 +34,34 @@ public final class PowerSourceWatcher: ObservableObject {
         }
 
         let matching = IOServiceMatching("IOPortFeaturePowerSource")
-        if IOServiceAddMatchingNotification(port, kIOMatchedNotification, matching, added, selfPtr, &addedIter) == KERN_SUCCESS {
+        if IOServiceAddMatchingNotification(
+            port, kIOMatchedNotification, matching, added, selfPtr, &addedIter) == KERN_SUCCESS
+        {
             handleAdded(addedIter)
         }
 
         let matching2 = IOServiceMatching("IOPortFeaturePowerSource")
-        if IOServiceAddMatchingNotification(port, kIOTerminatedNotification, matching2, removed, selfPtr, &removedIter) == KERN_SUCCESS {
+        if IOServiceAddMatchingNotification(
+            port, kIOTerminatedNotification, matching2, removed, selfPtr, &removedIter)
+            == KERN_SUCCESS
+        {
             handleRemoved(removedIter)
         }
     }
 
     public func stop() {
-        if addedIter != 0 { IOObjectRelease(addedIter); addedIter = 0 }
-        if removedIter != 0 { IOObjectRelease(removedIter); removedIter = 0 }
-        if let p = notifyPort { IONotificationPortDestroy(p); notifyPort = nil }
+        if addedIter != 0 {
+            IOObjectRelease(addedIter)
+            addedIter = 0
+        }
+        if removedIter != 0 {
+            IOObjectRelease(removedIter)
+            removedIter = 0
+        }
+        if let p = notifyPort {
+            IONotificationPortDestroy(p)
+            notifyPort = nil
+        }
         sources.removeAll()
     }
 
@@ -68,7 +82,10 @@ public final class PowerSourceWatcher: ObservableObject {
     public nonisolated static func readAllPowerSources() -> [PowerSource] {
         var rebuilt: [PowerSource] = []
         var iter: io_iterator_t = 0
-        if IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("IOPortFeaturePowerSource"), &iter) == KERN_SUCCESS {
+        if IOServiceGetMatchingServices(
+            kIOMainPortDefault, IOServiceMatching("IOPortFeaturePowerSource"), &iter)
+            == KERN_SUCCESS
+        {
             while case let service = IOIteratorNext(iter), service != 0 {
                 if let s = makeSource(from: service), !rebuilt.contains(where: { $0.id == s.id }) {
                     rebuilt.append(s)
@@ -109,7 +126,8 @@ public final class PowerSourceWatcher: ObservableObject {
         // typically when the service is being torn down mid-read. The
         // per-key call has no such failure path. See issue #181.
         func read(_ key: String) -> Any? {
-            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                .takeRetainedValue()
         }
 
         let name = (read("PowerSourceName") as? String) ?? "Unknown"
@@ -129,10 +147,12 @@ public final class PowerSourceWatcher: ObservableObject {
     }
 
     nonisolated static func parentPortIdentity(read: (String) -> Any?) -> (type: Int, number: Int) {
-        let type = (read("ParentBuiltInPortType") as? NSNumber)?.intValue
+        let type =
+            (read("ParentBuiltInPortType") as? NSNumber)?.intValue
             ?? (read("ParentPortType") as? NSNumber)?.intValue
             ?? 0
-        let number = (read("ParentBuiltInPortNumber") as? NSNumber)?.intValue
+        let number =
+            (read("ParentBuiltInPortNumber") as? NSNumber)?.intValue
             ?? (read("ParentPortNumber") as? NSNumber)?.intValue
             ?? Int(((read("Priority") as? NSNumber)?.uint64Value ?? 0) & 0xFF)
         return (type, number)
@@ -183,4 +203,3 @@ extension PowerSourceWatcher {
         return sources.filter { $0.portKey == key }
     }
 }
-

@@ -131,7 +131,8 @@ extension DataLinkDiagnostic {
         // Resolve the Mac port's capability. Explicit caller value wins
         // (mainly a test seam). Otherwise infer from the host root TB
         // switch's `supportedSpeed` mask. Nil for non-TB USB-C ports.
-        let resolvedHostMaxGbps = hostMaxGbps
+        let resolvedHostMaxGbps =
+            hostMaxGbps
             ?? Self.hostMaxGbpsFromSwitches(port: port, switches: thunderboltSwitches)
         // Same guard as ChargingDiagnostic: an inactive port can still
         // expose stale link state. Don't diagnose a port that isn't live.
@@ -149,13 +150,15 @@ extension DataLinkDiagnostic {
         // trust the transport's speed when USB3 is in `TransportsActive`:
         // the HPM port controller can leave a stale USB3 transport service
         // around when the negotiated link is only USB 2.0 (issue #187).
-        let usb3 = port.transportsActive.contains("USB3")
+        let usb3 =
+            port.transportsActive.contains("USB3")
             ? (usb3Transports.first { $0.portKey == port.portKey } ?? usb3Transports.first)
             : nil
 
         // The speed the link actually negotiated: the Thunderbolt link if
         // there is one, otherwise the USB 3 signaling generation.
-        let activeGbps = tbActiveGbps
+        let activeGbps =
+            tbActiveGbps
             ?? Self.activeTBGbps(port: port, switches: thunderboltSwitches)
             ?? Self.usb3Gbps(usb3?.signaling)
 
@@ -165,7 +168,8 @@ extension DataLinkDiagnostic {
         guard let active = activeGbps else { return nil }
 
         // Cable's claimed speed from its e-marker (SOP' / SOP'').
-        let cableIdentity = identities
+        let cableIdentity =
+            identities
             .first(where: { $0.endpoint == .sopPrime || $0.endpoint == .sopDoublePrime })
         let emarkerGbps = cableIdentity?.cableVDO?.speed.maxGbps
 
@@ -195,7 +199,7 @@ extension DataLinkDiagnostic {
         let conflict: Bool
         let cableMaxGbps: Double?
         switch (emarkerGbps, cioGbps) {
-        case let (e?, c?):
+        case (let e?, let c?):
             if Self.sameTier(e, c) {
                 conflict = false
                 cableMaxGbps = max(e, c)
@@ -207,10 +211,10 @@ extension DataLinkDiagnostic {
                     cableMaxGbps = c
                 }
             }
-        case let (e?, nil):
+        case (let e?, nil):
             conflict = false
             cableMaxGbps = e
-        case let (nil, c?):
+        case (nil, let c?):
             conflict = false
             cableMaxGbps = c
         case (nil, nil):
@@ -254,13 +258,15 @@ extension DataLinkDiagnostic {
         // least the speed it actually negotiated). The USB device list is
         // consulted only when no TB partner switch is reachable.
         let partner = Self.partnerSwitch(port: port, switches: thunderboltSwitches)
-        let fastestDevice = devices
+        let fastestDevice =
+            devices
             .filter { $0.speedRaw != nil }
             .max { (Self.deviceGbps($0.speedRaw) ?? 0) < (Self.deviceGbps($1.speedRaw) ?? 0) }
         let usbDeviceGbps = Self.deviceGbps(fastestDevice?.speedRaw)
         let deviceMaxGbps: Double?
         if let partner {
-            deviceMaxGbps = partner.supportedSpeed.maxTotalGbps
+            deviceMaxGbps =
+                partner.supportedSpeed.maxTotalGbps
                 ?? Self.activeTBGbps(port: port, switches: thunderboltSwitches)
         } else {
             deviceMaxGbps = usbDeviceGbps
@@ -286,8 +292,13 @@ extension DataLinkDiagnostic {
             activeGbps: active
         )
 
-        let conflictNote = conflict
-            ? " " + String(localized: "The cable's e-marker and the Thunderbolt controller disagree on its speed; the controller's reading is treated as authoritative.", bundle: _coreLocalizedBundle)
+        let conflictNote =
+            conflict
+            ? " "
+                + String(
+                    localized:
+                        "The cable's e-marker and the Thunderbolt controller disagree on its speed; the controller's reading is treated as authoritative.",
+                    bundle: _coreLocalizedBundle)
             : ""
 
         // Cable / active-rate contradiction short-circuit. When the
@@ -297,25 +308,34 @@ extension DataLinkDiagnostic {
         // is the only reliable way for the user to resolve it.
         if cableContradiction, let cableClaim = cableMaxGbps {
             self.bottleneck = .cableContradictsActive(cableGbps: cableClaim, activeGbps: active)
-            self.summary = String(localized: "Cable says \(Self.label(cableClaim)), link reads \(Self.label(active))", bundle: _coreLocalizedBundle)
-            self.detail = String(localized: "The cable's e-marker reports \(Self.label(cableClaim)), but the active link is reading \(Self.label(active)). One of those readings is wrong, and without a Thunderbolt controller cross-check we can't tell which. Trying a known-good cable will identify the culprit.", bundle: _coreLocalizedBundle)
+            self.summary = String(
+                localized: "Cable says \(Self.label(cableClaim)), link reads \(Self.label(active))",
+                bundle: _coreLocalizedBundle)
+            self.detail = String(
+                localized:
+                    "The cable's e-marker reports \(Self.label(cableClaim)), but the active link is reading \(Self.label(active)). One of those readings is wrong, and without a Thunderbolt controller cross-check we can't tell which. Trying a known-good cable will identify the culprit.",
+                bundle: _coreLocalizedBundle)
             return
         }
 
         // Every capability we actually know about, tagged by party. The
         // link can never run faster than the slowest of these.
         var caps: [(party: String, value: Double)] = []
-        if let c = cableMaxGbps         { caps.append((party: "cable",  value: c)) }
-        if let h = resolvedHostMaxGbps  { caps.append((party: "host",   value: h)) }
-        if let d = deviceMaxGbps        { caps.append((party: "device", value: d)) }
+        if let c = cableMaxGbps { caps.append((party: "cable", value: c)) }
+        if let h = resolvedHostMaxGbps { caps.append((party: "host", value: h)) }
+        if let d = deviceMaxGbps { caps.append((party: "device", value: d)) }
 
         guard let expected = caps.map(\.value).min() else {
             // We know the active speed but have nothing to compare it to:
             // no e-marker, no controller data, host unresolved, no device.
             // Don't guess a culprit.
             self.bottleneck = .unknownCable(activeGbps: active)
-            self.summary = String(localized: "Running at \(Self.label(active))", bundle: _coreLocalizedBundle)
-            self.detail = String(localized: "There's no cable e-marker or controller data, and no port or device capability to compare against, so we can't tell whether the cable is the limit.", bundle: _coreLocalizedBundle)
+            self.summary = String(
+                localized: "Running at \(Self.label(active))", bundle: _coreLocalizedBundle)
+            self.detail = String(
+                localized:
+                    "There's no cable e-marker or controller data, and no port or device capability to compare against, so we can't tell whether the cable is the limit.",
+                bundle: _coreLocalizedBundle)
             return
         }
 
@@ -326,12 +346,22 @@ extension DataLinkDiagnostic {
             // Either way, never claim "full speed" here (the old draft bug).
             if cableMaxGbps == nil {
                 self.bottleneck = .unknownCable(activeGbps: active)
-                self.summary = String(localized: "Running at \(Self.label(active))", bundle: _coreLocalizedBundle)
-                self.detail = String(localized: "This cable has no e-marker and no controller data, so we can't tell whether it is the limit.", bundle: _coreLocalizedBundle)
+                self.summary = String(
+                    localized: "Running at \(Self.label(active))", bundle: _coreLocalizedBundle)
+                self.detail = String(
+                    localized:
+                        "This cable has no e-marker and no controller data, so we can't tell whether it is the limit.",
+                    bundle: _coreLocalizedBundle)
             } else {
                 self.bottleneck = .degraded(activeGbps: active, expectedGbps: expected)
-                self.summary = String(localized: "Running slower than expected (\(Self.label(active)))", bundle: _coreLocalizedBundle)
-                self.detail = String(localized: "The parts we can see all support \(Self.label(expected)) or more, but the link came up slower. Reseating the cable or trying another port may help.", bundle: _coreLocalizedBundle) + conflictNote
+                self.summary = String(
+                    localized: "Running slower than expected (\(Self.label(active)))",
+                    bundle: _coreLocalizedBundle)
+                self.detail =
+                    String(
+                        localized:
+                            "The parts we can see all support \(Self.label(expected)) or more, but the link came up slower. Reseating the cable or trying another port may help.",
+                        bundle: _coreLocalizedBundle) + conflictNote
             }
             return
         }
@@ -345,8 +375,14 @@ extension DataLinkDiagnostic {
 
         guard !fasterOthers.isEmpty else {
             self.bottleneck = .fine(activeGbps: active)
-            self.summary = String(localized: "Running at full data speed (\(Self.label(active)))", bundle: _coreLocalizedBundle)
-            self.detail = String(localized: "Nothing is being held back: the parts we can see all support this speed.", bundle: _coreLocalizedBundle) + conflictNote
+            self.summary = String(
+                localized: "Running at full data speed (\(Self.label(active)))",
+                bundle: _coreLocalizedBundle)
+            self.detail =
+                String(
+                    localized:
+                        "Nothing is being held back: the parts we can see all support this speed.",
+                    bundle: _coreLocalizedBundle) + conflictNote
             return
         }
 
@@ -365,16 +401,31 @@ extension DataLinkDiagnostic {
         switch culprit {
         case "cable":
             self.bottleneck = .cableLimit(cableGbps: expected, capableGbps: capable)
-            self.summary = String(localized: "Cable is limiting data speed", bundle: _coreLocalizedBundle)
-            self.detail = String(localized: "The Mac and device can do \(Self.label(capable)), but the cable only carries \(Self.label(expected)). A faster cable would unlock full speed.", bundle: _coreLocalizedBundle) + conflictNote
+            self.summary = String(
+                localized: "Cable is limiting data speed", bundle: _coreLocalizedBundle)
+            self.detail =
+                String(
+                    localized:
+                        "The Mac and device can do \(Self.label(capable)), but the cable only carries \(Self.label(expected)). A faster cable would unlock full speed.",
+                    bundle: _coreLocalizedBundle) + conflictNote
         case "host":
             self.bottleneck = .hostLimit(hostGbps: expected, capableGbps: capable)
-            self.summary = String(localized: "This Mac port limits data speed", bundle: _coreLocalizedBundle)
-            self.detail = String(localized: "The cable and device can do \(Self.label(capable)), but this port maxes out at \(Self.label(expected)).", bundle: _coreLocalizedBundle) + conflictNote
-        default: // device
+            self.summary = String(
+                localized: "This Mac port limits data speed", bundle: _coreLocalizedBundle)
+            self.detail =
+                String(
+                    localized:
+                        "The cable and device can do \(Self.label(capable)), but this port maxes out at \(Self.label(expected)).",
+                    bundle: _coreLocalizedBundle) + conflictNote
+        default:  // device
             self.bottleneck = .deviceLimit(deviceGbps: expected)
-            self.summary = String(localized: "Device runs at \(Self.label(expected))", bundle: _coreLocalizedBundle)
-            self.detail = String(localized: "This is the fastest the connected device supports. It is not a cable problem.", bundle: _coreLocalizedBundle) + conflictNote
+            self.summary = String(
+                localized: "Device runs at \(Self.label(expected))", bundle: _coreLocalizedBundle)
+            self.detail =
+                String(
+                    localized:
+                        "This is the fastest the connected device supports. It is not a cable problem.",
+                    bundle: _coreLocalizedBundle) + conflictNote
         }
     }
 
@@ -399,11 +450,12 @@ extension DataLinkDiagnostic {
         switches: [IOThunderboltSwitch]
     ) -> Double? {
         guard port.transportsActive.contains("CIO"),
-              !switches.isEmpty,
-              let socketID = ThunderboltTopology.socketID(for: port),
-              let root = ThunderboltTopology.hostRoot(forSocketID: socketID, in: switches),
-              let hostPort = ThunderboltTopology.activeDownstreamLanePort(root),
-              let gen = hostPort.currentSpeed else {
+            !switches.isEmpty,
+            let socketID = ThunderboltTopology.socketID(for: port),
+            let root = ThunderboltTopology.hostRoot(forSocketID: socketID, in: switches),
+            let hostPort = ThunderboltTopology.activeDownstreamLanePort(root),
+            let gen = hostPort.currentSpeed
+        else {
             return nil
         }
         return gen.totalGbps
@@ -426,13 +478,15 @@ extension DataLinkDiagnostic {
         switches: [IOThunderboltSwitch]
     ) -> Double? {
         guard !switches.isEmpty,
-              let socketID = ThunderboltTopology.socketID(for: port),
-              let root = ThunderboltTopology.hostRoot(forSocketID: socketID, in: switches) else {
+            let socketID = ThunderboltTopology.socketID(for: port),
+            let root = ThunderboltTopology.hostRoot(forSocketID: socketID, in: switches)
+        else {
             return nil
         }
         if let portMask = root.ports
             .first(where: { $0.adapterType.isLane && $0.socketID == socketID })?
-            .supportedSpeed {
+            .supportedSpeed
+        {
             return portMask.maxTotalGbps
         }
         return root.supportedSpeed.maxTotalGbps
@@ -458,11 +512,12 @@ extension DataLinkDiagnostic {
         switches: [IOThunderboltSwitch]
     ) -> IOThunderboltSwitch? {
         guard !switches.isEmpty,
-              let socketID = ThunderboltTopology.socketID(for: port),
-              let root = ThunderboltTopology.hostRoot(forSocketID: socketID, in: switches),
-              let hostLanePort = root.ports.first(where: {
-                  $0.adapterType.isLane && $0.socketID == socketID
-              }) else {
+            let socketID = ThunderboltTopology.socketID(for: port),
+            let root = ThunderboltTopology.hostRoot(forSocketID: socketID, in: switches),
+            let hostLanePort = root.ports.first(where: {
+                $0.adapterType.isLane && $0.socketID == socketID
+            })
+        else {
             return nil
         }
         return switches.first { sw in
@@ -494,12 +549,12 @@ extension DataLinkDiagnostic {
     /// USB device "Device Speed" enum to Gbps. Mirrors USBDevice.speedLabel.
     static func deviceGbps(_ speedRaw: UInt8?) -> Double? {
         switch speedRaw {
-        case 0: return 0.0015   // Low Speed   1.5 Mbps
-        case 1: return 0.012    // Full Speed  12 Mbps
-        case 2: return 0.48     // High Speed  480 Mbps
-        case 3: return 5        // SuperSpeed  5 Gbps
-        case 4: return 10       // SuperSpeed+ 10 Gbps
-        case 5: return 20       // Gen 2x2     20 Gbps
+        case 0: return 0.0015  // Low Speed   1.5 Mbps
+        case 1: return 0.012  // Full Speed  12 Mbps
+        case 2: return 0.48  // High Speed  480 Mbps
+        case 3: return 5  // SuperSpeed  5 Gbps
+        case 4: return 10  // SuperSpeed+ 10 Gbps
+        case 5: return 20  // Gen 2x2     20 Gbps
         default: return nil
         }
     }

@@ -1,9 +1,9 @@
+import AppKit
 // Self-hosted update checker.
 import Foundation
-import AppKit
 import UserNotifications
-import os.log
 import WhatCableCore
+import os.log
 
 struct AvailableUpdate: Equatable {
     let version: String
@@ -17,9 +17,11 @@ struct AvailableUpdate: Equatable {
 final class UpdateChecker: ObservableObject {
     static let shared = UpdateChecker()
 
-    private nonisolated static let log = Logger(subsystem: "uk.whatcable.whatcable", category: "updates")
-    private static let endpoint = URL(string: "https://api.github.com/repos/darrylmorley/whatcable/releases/latest")!
-    private static let pollInterval: TimeInterval = 6 * 60 * 60 // 6h
+    private nonisolated static let log = Logger(
+        subsystem: "uk.whatcable.whatcable", category: "updates")
+    private static let endpoint = URL(
+        string: "https://api.github.com/repos/darrylmorley/whatcable/releases/latest")!
+    private static let pollInterval: TimeInterval = 6 * 60 * 60  // 6h
 
     @Published private(set) var available: AvailableUpdate?
     @Published private(set) var isChecking = false
@@ -36,7 +38,8 @@ final class UpdateChecker: ObservableObject {
 
     func start() {
         check(silent: true)
-        timer = Timer.scheduledTimer(withTimeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: Self.pollInterval, repeats: true) {
+            [weak self] _ in
             Task { @MainActor in self?.check(silent: true) }
         }
     }
@@ -70,17 +73,27 @@ final class UpdateChecker: ObservableObject {
                 self.pendingVisibleCheck = false
 
                 if let error {
-                    Self.log.error("Update check failed: \(error.localizedDescription, privacy: .public)")
-                    if visible { self.showAlert(title: "Couldn't check for updates", message: error.localizedDescription) }
+                    Self.log.error(
+                        "Update check failed: \(error.localizedDescription, privacy: .public)")
+                    if visible {
+                        self.showAlert(
+                            title: "Couldn't check for updates", message: error.localizedDescription
+                        )
+                    }
                     return
                 }
 
                 guard let data,
-                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      let tag = json["tag_name"] as? String,
-                      let urlString = json["html_url"] as? String,
-                      let url = URL(string: urlString) else {
-                    if visible { self.showAlert(title: "Couldn't check for updates", message: "Unexpected response from GitHub.") }
+                    let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                    let tag = json["tag_name"] as? String,
+                    let urlString = json["html_url"] as? String,
+                    let url = URL(string: urlString)
+                else {
+                    if visible {
+                        self.showAlert(
+                            title: "Couldn't check for updates",
+                            message: "Unexpected response from GitHub.")
+                    }
                     return
                 }
 
@@ -93,7 +106,8 @@ final class UpdateChecker: ObservableObject {
                     .flatMap { Self.isTrustedDownloadURL($0) ? $0 : nil }
 
                 if Self.isNewer(remote: remote, current: AppInfo.version) {
-                    let update = AvailableUpdate(version: remote, url: url, downloadURL: downloadURL, notes: notes)
+                    let update = AvailableUpdate(
+                        version: remote, url: url, downloadURL: downloadURL, notes: notes)
                     self.available = update
                     if self.notifiedVersion != remote {
                         self.notifiedVersion = remote
@@ -125,7 +139,8 @@ final class UpdateChecker: ObservableObject {
         content.title = "WhatCable \(update.version) available"
         content.body = "You're on \(AppInfo.version). Click to view release notes."
         UNUserNotificationCenter.current().add(
-            UNNotificationRequest(identifier: "update-\(update.version)", content: content, trigger: nil)
+            UNNotificationRequest(
+                identifier: "update-\(update.version)", content: content, trigger: nil)
         )
     }
 
@@ -153,7 +168,8 @@ final class UpdateChecker: ObservableObject {
 
         let alert = NSAlert()
         alert.messageText = "WhatCable \(update.version) is available"
-        alert.informativeText = "You're on \(AppInfo.version). Open the release page to read the notes and download."
+        alert.informativeText =
+            "You're on \(AppInfo.version). Open the release page to read the notes and download."
         alert.window.level = .floating
         let hasDownload = update.downloadURL != nil
         if hasDownload {
@@ -180,9 +196,11 @@ final class UpdateChecker: ObservableObject {
     /// Only accept download URLs from GitHub's release asset CDN.
     nonisolated static func isTrustedDownloadURL(_ url: URL) -> Bool {
         guard url.scheme == "https",
-              let host = url.host else { return false }
-        let trusted = ["objects.githubusercontent.com", "github.com", "releases.githubusercontent.com"]
+            let host = url.host
+        else { return false }
+        let trusted = [
+            "objects.githubusercontent.com", "github.com", "releases.githubusercontent.com",
+        ]
         return trusted.contains(host)
     }
 }
-

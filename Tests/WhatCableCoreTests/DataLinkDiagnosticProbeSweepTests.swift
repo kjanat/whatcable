@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WhatCableCore
 
 /// Property-style sweep over every customer probe under
@@ -17,9 +18,9 @@ struct DataLinkDiagnosticProbeSweepTests {
     /// to be dropped under `research/customer-probes/` to be picked up.
     private static let probeRoot: URL = {
         URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()   // WhatCableCoreTests
-            .deletingLastPathComponent()   // Tests
-            .deletingLastPathComponent()   // repo root
+            .deletingLastPathComponent()  // WhatCableCoreTests
+            .deletingLastPathComponent()  // Tests
+            .deletingLastPathComponent()  // repo root
             .appendingPathComponent("research/customer-probes")
     }()
 
@@ -73,7 +74,8 @@ struct DataLinkDiagnosticProbeSweepTests {
     /// both `AppleTCControllerType*` (M1/M2) and `AppleHPMInterfaceType*`
     /// (M3+) naming.
     private static func loadPorts(probe: String) throws -> [ProbePort] {
-        let url = probeRoot
+        let url =
+            probeRoot
             .appendingPathComponent(probe)
             .appendingPathComponent("01_walk_pd_tree.json")
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
@@ -108,22 +110,24 @@ struct DataLinkDiagnosticProbeSweepTests {
             guard body.contains("PortTypeDescription") else { continue }
 
             let portType = parseQuoted(body, key: "PortTypeDescription")
-            let serviceName = parseQuoted(body, key: "Description")
+            let serviceName =
+                parseQuoted(body, key: "Description")
                 ?? "Port-Unknown@0"
             let portNumber = parseInt(body, key: "PortNumber") ?? 0
             let supp = parseList(body, key: "TransportsSupported")
             let act = parseList(body, key: "TransportsActive")
             let conn = body.contains("ConnectionActive = true")
 
-            ports.append(ProbePort(
-                probe: probe,
-                serviceName: serviceName,
-                portTypeDescription: portType,
-                portNumber: portNumber,
-                transportsSupported: supp,
-                transportsActive: act,
-                connectionActive: conn
-            ))
+            ports.append(
+                ProbePort(
+                    probe: probe,
+                    serviceName: serviceName,
+                    portTypeDescription: portType,
+                    portNumber: portNumber,
+                    transportsSupported: supp,
+                    transportsActive: act,
+                    connectionActive: conn
+                ))
         }
         return ports
     }
@@ -179,7 +183,8 @@ struct DataLinkDiagnosticProbeSweepTests {
         let inside = afterOpen[..<close.lowerBound]
         return inside.split(separator: "\n").compactMap { line -> String? in
             guard let q1 = line.firstIndex(of: "\""),
-                  let q2 = line.lastIndex(of: "\""), q1 != q2 else { return nil }
+                let q2 = line.lastIndex(of: "\""), q1 != q2
+            else { return nil }
             return String(line[line.index(after: q1)..<q2])
         }
     }
@@ -191,7 +196,8 @@ struct DataLinkDiagnosticProbeSweepTests {
     /// catch-22 case in #195 actually looked like on the real M2 MBA:
     /// MagSafe @1 colliding with USB-C @1, both finding a 40 Gbps lane
     /// on the same host root.
-    private static func makeHostSwitch(socketID: String, supportedRaw: UInt8) -> IOThunderboltSwitch {
+    private static func makeHostSwitch(socketID: String, supportedRaw: UInt8) -> IOThunderboltSwitch
+    {
         let lane = IOThunderboltPort(
             portNumber: 1,
             socketID: socketID,
@@ -257,15 +263,21 @@ struct DataLinkDiagnosticProbeSweepTests {
                     cio: nil,
                     thunderboltSwitches: [host]
                 )
-                #expect(diag == nil,
-                    "Probe \(probe): MagSafe port \(ms.serviceName) should not produce a data-link verdict (carriesData gate)")
+                #expect(
+                    diag == nil,
+                    "Probe \(probe): MagSafe port \(ms.serviceName) should not produce a data-link verdict (carriesData gate)"
+                )
             }
         }
 
-        #expect(magSafeRowsExamined >= 50,
-            "Expected at least 50 MagSafe rows in the customer-probe set; found \(magSafeRowsExamined)")
-        #expect(collisions == magSafeRowsExamined,
-            "Every MagSafe row in the dataset shares an @N suffix with a USB-C port (\(magSafeRowsExamined) total); only \(collisions) collisions were observed, which would indicate the catalogue or the dataset has changed shape")
+        #expect(
+            magSafeRowsExamined >= 50,
+            "Expected at least 50 MagSafe rows in the customer-probe set; found \(magSafeRowsExamined)"
+        )
+        #expect(
+            collisions == magSafeRowsExamined,
+            "Every MagSafe row in the dataset shares an @N suffix with a USB-C port (\(magSafeRowsExamined) total); only \(collisions) collisions were observed, which would indicate the catalogue or the dataset has changed shape"
+        )
     }
 
     @Test("Every USB-C row in the probe set has carriesData true")
@@ -280,11 +292,15 @@ struct DataLinkDiagnosticProbeSweepTests {
             let ports = try Self.loadPorts(probe: probe)
             for p in ports where p.portTypeDescription == "USB-C" {
                 rows += 1
-                #expect(p.asAppleHPMInterface.carriesData,
-                    "Probe \(probe): USB-C port \(p.serviceName) reports TransportsSupported=\(p.transportsSupported), which the carriesData gate would refuse")
+                #expect(
+                    p.asAppleHPMInterface.carriesData,
+                    "Probe \(probe): USB-C port \(p.serviceName) reports TransportsSupported=\(p.transportsSupported), which the carriesData gate would refuse"
+                )
             }
         }
-        #expect(rows >= 100, "Expected at least 100 USB-C rows in the customer-probe set; found \(rows)")
+        #expect(
+            rows >= 100, "Expected at least 100 USB-C rows in the customer-probe set; found \(rows)"
+        )
     }
 
     @Test("Connected USB-C ports without USB3 or CIO transport do not produce a TB verdict")
@@ -299,10 +315,12 @@ struct DataLinkDiagnosticProbeSweepTests {
         var examined = 0
         for probe in probes {
             let ports = try Self.loadPorts(probe: probe)
-            for p in ports where p.portTypeDescription == "USB-C"
-                              && p.connectionActive
-                              && !p.transportsActive.contains("USB3")
-                              && !p.transportsActive.contains("CIO") {
+            for p in ports
+            where p.portTypeDescription == "USB-C"
+                && p.connectionActive
+                && !p.transportsActive.contains("USB3")
+                && !p.transportsActive.contains("CIO")
+            {
                 examined += 1
 
                 let suffix = String(p.serviceName.split(separator: "@").last ?? "")
@@ -315,15 +333,19 @@ struct DataLinkDiagnosticProbeSweepTests {
                     cio: nil,
                     thunderboltSwitches: [host]
                 )
-                #expect(diag == nil,
-                    "Probe \(probe): USB-C port \(p.serviceName) is connected with TransportsActive=\(p.transportsActive) but no USB3/CIO; the diagnostic should not pick up a TB lane rate from the internal root lane")
+                #expect(
+                    diag == nil,
+                    "Probe \(probe): USB-C port \(p.serviceName) is connected with TransportsActive=\(p.transportsActive) but no USB3/CIO; the diagnostic should not pick up a TB lane rate from the internal root lane"
+                )
             }
         }
         // Most probe captures will have at least one such port; if none
         // are present, the new gate is untested by this sweep but other
         // tests still cover it.
         if examined == 0 {
-            Issue.record("No connected USB-C ports without USB3/CIO found in the probe set; the activeTBGbps gate is not exercised by this sweep")
+            Issue.record(
+                "No connected USB-C ports without USB3/CIO found in the probe set; the activeTBGbps gate is not exercised by this sweep"
+            )
         }
     }
 }

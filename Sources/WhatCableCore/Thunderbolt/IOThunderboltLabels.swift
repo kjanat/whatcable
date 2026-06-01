@@ -18,8 +18,9 @@ public enum ThunderboltLabels {
     /// - `"Up to 40 Gb/s (3 TX / 1 RX)"` (TB5 asymmetric)
     public static func linkLabel(for port: IOThunderboltPort) -> String? {
         guard port.hasActiveLink,
-              let gen = port.currentSpeed,
-              let width = port.currentWidth else {
+            let gen = port.currentSpeed,
+            let width = port.currentWidth
+        else {
             return nil
         }
 
@@ -30,7 +31,9 @@ public enum ThunderboltLabels {
             return String(localized: "Up to \(perLane) Gb/s \(lanes)", bundle: _coreLocalizedBundle)
         case .unknown(let raw):
             let hex = String(raw, radix: 16)
-            return String(localized: "Unknown generation (raw speed code 0x\(hex))", bundle: _coreLocalizedBundle)
+            return String(
+                localized: "Unknown generation (raw speed code 0x\(hex))",
+                bundle: _coreLocalizedBundle)
         }
     }
 
@@ -71,9 +74,10 @@ public enum ThunderboltTopology {
         in switches: [IOThunderboltSwitch]
     ) -> IOThunderboltSwitch? {
         switches.first { sw in
-            sw.isHostRoot && sw.ports.contains {
-                $0.adapterType.isLane && $0.socketID == socketID
-            }
+            sw.isHostRoot
+                && sw.ports.contains {
+                    $0.adapterType.isLane && $0.socketID == socketID
+                }
         }
     }
 

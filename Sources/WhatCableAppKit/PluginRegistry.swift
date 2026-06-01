@@ -1,6 +1,6 @@
-import SwiftUI
 import AppKit
 import Combine
+import SwiftUI
 
 @MainActor
 public final class PluginRegistry {
@@ -18,7 +18,8 @@ public final class PluginRegistry {
     }
 
     public private(set) var nsMenuItemBuilders: [MenuPlacement: [() -> NSMenuItem]] = [:]
-    public func register(nsMenuItemBuilder: @escaping () -> NSMenuItem, at placement: MenuPlacement) {
+    public func register(nsMenuItemBuilder: @escaping () -> NSMenuItem, at placement: MenuPlacement)
+    {
         nsMenuItemBuilders[placement, default: []].append(nsMenuItemBuilder)
     }
 

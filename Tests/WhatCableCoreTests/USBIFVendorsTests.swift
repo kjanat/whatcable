@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 /// Tests for the bundled SQLite vendor database. Most user-facing behaviour
@@ -72,12 +73,12 @@ struct CableDBTests {
     @Test("cable e-marker chip vendors all resolve")
     func cableEmarkerChipVendorsAllResolve() {
         // The six chip vendors observed in real cable reports.
-        #expect(CableDB.vendorName(vid: 0x20C2) != nil) // Sumitomo
-        #expect(CableDB.vendorName(vid: 0x315C) != nil) // Convenientpower
-        #expect(CableDB.vendorName(vid: 0x2095) != nil) // CE LINK
-        #expect(CableDB.vendorName(vid: 0x2E99) != nil) // Hynetek
-        #expect(CableDB.vendorName(vid: 0x201C) != nil) // Freeport
-        #expect(CableDB.vendorName(vid: 0x2B1D) != nil) // Lintes
+        #expect(CableDB.vendorName(vid: 0x20C2) != nil)  // Sumitomo
+        #expect(CableDB.vendorName(vid: 0x315C) != nil)  // Convenientpower
+        #expect(CableDB.vendorName(vid: 0x2095) != nil)  // CE LINK
+        #expect(CableDB.vendorName(vid: 0x2E99) != nil)  // Hynetek
+        #expect(CableDB.vendorName(vid: 0x201C) != nil)  // Freeport
+        #expect(CableDB.vendorName(vid: 0x2B1D) != nil)  // Lintes
     }
 
     @Test("usb.ids vendor resolves name")
@@ -102,7 +103,7 @@ struct CableDBTests {
     @Test("curated cable lookup")
     func curatedCableLookup() {
         // CalDigit TS5 Plus bundled cable: VID 0x01B6, PID 0x4003.
-        let cables = CableDB.curatedCables(vid: 0x01B6, pid: 0x4003, cableVDO: 0x110A2644)
+        let cables = CableDB.curatedCables(vid: 0x01B6, pid: 0x4003, cableVDO: 0x110A_2644)
         #expect(!cables.isEmpty)
         #expect(cables.contains { $0.brand.contains("CalDigit") })
     }
@@ -130,8 +131,8 @@ struct CableDBTests {
         // A zeroed VID/PID but a specific non-zero Cable VDO still
         // identifies the curated entry keyed on that VDO. Only the
         // all-zero key is rejected; a real VDO is kept.
-        let dockcase = CableDB.curatedCables(vid: 0, pid: 0, cableVDO: 0x00082042)
-        let vorodcip = CableDB.curatedCables(vid: 0, pid: 0, cableVDO: 0x000A6642)
+        let dockcase = CableDB.curatedCables(vid: 0, pid: 0, cableVDO: 0x0008_2042)
+        let vorodcip = CableDB.curatedCables(vid: 0, pid: 0, cableVDO: 0x000A_6642)
 
         #expect(!dockcase.isEmpty)
         #expect(!vorodcip.isEmpty)
@@ -143,7 +144,7 @@ struct CableDBTests {
     @Test("shared fingerprint returns multiple entries")
     func sharedFingerprintReturnsMultipleEntries() {
         // CalDigit TB5 cables: same silicon, reported in multiple issues.
-        let cables = CableDB.curatedCables(vid: 0x01B6, pid: 0x4003, cableVDO: 0x110A2644)
+        let cables = CableDB.curatedCables(vid: 0x01B6, pid: 0x4003, cableVDO: 0x110A_2644)
         #expect(cables.count > 1, "Expected multiple entries for shared CalDigit fingerprint")
     }
 }

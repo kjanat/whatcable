@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+
 @testable import WhatCableCore
 @testable import WhatCableDarwinBackend
 
@@ -39,8 +40,7 @@ struct RegistryParsingTests {
     @Test("USBWatcher extracts port name and bus index")
     func usbWatcherExtractsPortNameAndBusIndex() {
         #expect(
-            USBWatcher.portName(fromUSBIOPortPath: "AppleARMIO/Port-USB-C@1") ==
-            "Port-USB-C@1"
+            USBWatcher.portName(fromUSBIOPortPath: "AppleARMIO/Port-USB-C@1") == "Port-USB-C@1"
         )
         #expect(USBWatcher.portName(fromUSBIOPortPath: "AppleARMIO/AppleUSBHostPort@1") == nil)
         #expect(USBWatcher.busIndex(fromLocationID: 0x0300_0000) == 3)
@@ -52,7 +52,7 @@ struct RegistryParsingTests {
             "ParentBuiltInPortType": NSNumber(value: 0x11),
             "ParentBuiltInPortNumber": NSNumber(value: 2),
             "ParentPortType": NSNumber(value: 2),
-            "ParentPortNumber": NSNumber(value: 1)
+            "ParentPortNumber": NSNumber(value: 1),
         ]
         let builtInParent = PowerSourceWatcher.parentPortIdentity(read: { builtIn[$0] })
         #expect(builtInParent.type == 0x11)
@@ -60,7 +60,7 @@ struct RegistryParsingTests {
 
         let priority: [String: Any] = [
             "ParentPortType": NSNumber(value: 0x11),
-            "Priority": NSNumber(value: 0x0201)
+            "Priority": NSNumber(value: 0x0201),
         ]
         let priorityParent = PowerSourceWatcher.parentPortIdentity(read: { priority[$0] })
         #expect(priorityParent.type == 0x11)
@@ -76,8 +76,8 @@ struct RegistryParsingTests {
             "Metadata": [
                 "Vendor ID (SOP1)": NSNumber(value: 0x05AC),
                 "Product ID (SOP1)": NSNumber(value: 0x1234),
-                "bcdDevice": NSNumber(value: 0x0100)
-            ]
+                "bcdDevice": NSNumber(value: 0x0100),
+            ],
         ]
         let metadata = USBPDSOPWatcher.metadataDictionary(read: { dict[$0] })
         let parent = USBPDSOPWatcher.parentPortIdentity(read: { dict[$0] })
@@ -99,7 +99,7 @@ struct RegistryParsingTests {
             "ParentBuiltInPortType": NSNumber(value: 0x11),
             "ParentBuiltInPortNumber": NSNumber(value: 2),
             "ParentPortType": NSNumber(value: 2),
-            "ParentPortNumber": NSNumber(value: 1)
+            "ParentPortNumber": NSNumber(value: 1),
         ]
         let builtInParent = USBPDSOPWatcher.parentPortIdentity(read: { builtIn[$0] })
         #expect(builtInParent.type == 0x11)
@@ -107,7 +107,7 @@ struct RegistryParsingTests {
 
         let priority: [String: Any] = [
             "ParentPortType": NSNumber(value: 0x11),
-            "Priority": NSNumber(value: 0x0201)
+            "Priority": NSNumber(value: 0x0201),
         ]
         let priorityParent = USBPDSOPWatcher.parentPortIdentity(read: { priority[$0] })
         #expect(priorityParent.type == 0x11)

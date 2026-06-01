@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import WhatCableCore
 
 /// Empirical guard: run every catalogued real cable from `data/known-cables.md`
@@ -23,15 +24,17 @@ struct CableTrustCorpusTests {
     /// three levels up from Tests/WhatCableCoreTests/).
     private static func corpusURL() -> URL {
         URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()   // WhatCableCoreTests
-            .deletingLastPathComponent()   // Tests
-            .deletingLastPathComponent()   // repo root
+            .deletingLastPathComponent()  // WhatCableCoreTests
+            .deletingLastPathComponent()  // Tests
+            .deletingLastPathComponent()  // repo root
             .appendingPathComponent("data/known-cables.md")
     }
 
     private static func hex(_ cell: String) -> Int? {
         let s = cell.replacingOccurrences(of: "`", with: "").trimmingCharacters(in: .whitespaces)
-        guard s.lowercased().hasPrefix("0x"), let v = Int(s.dropFirst(2), radix: 16) else { return nil }
+        guard s.lowercased().hasPrefix("0x"), let v = Int(s.dropFirst(2), radix: 16) else {
+            return nil
+        }
         return v
     }
 
@@ -44,12 +47,17 @@ struct CableTrustCorpusTests {
             var body = t
             if body.hasSuffix("|") { body.removeLast() }
             if body.hasPrefix("|") { body.removeFirst() }
-            let cells = body.components(separatedBy: "|").map { $0.trimmingCharacters(in: .whitespaces) }
+            let cells = body.components(separatedBy: "|").map {
+                $0.trimmingCharacters(in: .whitespaces)
+            }
             // context | VID | PID | Cable VDO | Vendor | XID | Speed | Power | Type | Source
             guard cells.count >= 10, let vid = hex(cells[1]) else { continue }
             let pid = hex(cells[2]) ?? 0
             let vdo = hex(cells[3]).map { UInt32(truncatingIfNeeded: $0) }
-            rows.append(Row(context: cells[0], vid: vid, pid: pid, cableVDO: vdo, issue: cells[cells.count - 1]))
+            rows.append(
+                Row(
+                    context: cells[0], vid: vid, pid: pid, cableVDO: vdo,
+                    issue: cells[cells.count - 1]))
         }
         return rows
     }
@@ -58,7 +66,10 @@ struct CableTrustCorpusTests {
     /// CableTrustReportTests: vendor/product set directly, VDO[3] is the raw
     /// cable VDO (omitted when the row has none, so no encoding is decoded).
     private func identity(_ row: Row) -> USBPDSOP {
-        var vdos: [UInt32] = [(3 << 27) | UInt32(truncatingIfNeeded: row.vid), 0, UInt32(truncatingIfNeeded: row.pid) << 16]
+        var vdos: [UInt32] = [
+            (3 << 27) | UInt32(truncatingIfNeeded: row.vid), 0,
+            UInt32(truncatingIfNeeded: row.pid) << 16,
+        ]
         if let vdo = row.cableVDO { vdos.append(vdo) }
         return USBPDSOP(
             id: 1, endpoint: .sopPrime,
@@ -73,7 +84,8 @@ struct CableTrustCorpusTests {
         let rows = Self.parseRows()
         #expect(rows.count >= 50, "corpus parse looks wrong: only \(rows.count) rows")
 
-        var green = 0, amber = 0
+        var green = 0
+        var amber = 0
         var reds: [(Row, [String])] = []
 
         for row in rows {
@@ -82,7 +94,7 @@ struct CableTrustCorpusTests {
             let trust = CableTrust(
                 report: report,
                 vendorRegistered: VendorDB.isRegistered(row.vid),
-                dataLink: nil,             // corpus has no live link data
+                dataLink: nil,  // corpus has no live link data
                 negotiatedWatts: nil,
                 ratedWatts: id.cableVDO?.maxWatts
             )
@@ -93,15 +105,16 @@ struct CableTrustCorpusTests {
             }
         }
 
-        print("""
+        print(
+            """
 
-        ── Cable trust corpus validation ──────────────────────────
-        cables tested: \(rows.count)
-        static tiers:  green \(green)   amber \(amber)   red \(reds.count)
-        Behaviour-first model: with no live link/PD data in the corpus
-        there is nothing to confirm, so every cable should be amber.
-        Green needs watched delivery; red needs corroborated non-delivery.
-        """)
+            ── Cable trust corpus validation ──────────────────────────
+            cables tested: \(rows.count)
+            static tiers:  green \(green)   amber \(amber)   red \(reds.count)
+            Behaviour-first model: with no live link/PD data in the corpus
+            there is nothing to confirm, so every cable should be amber.
+            Green needs watched delivery; red needs corroborated non-delivery.
+            """)
         if reds.isEmpty {
             print("RED: none — no catalogued real cable is flagged red. ✓")
         } else {

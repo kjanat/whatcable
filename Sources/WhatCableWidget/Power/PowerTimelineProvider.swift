@@ -1,7 +1,7 @@
 import Foundation
+import WhatCableCore
 import WidgetKit
 import os.log
-import WhatCableCore
 
 struct PowerTimelineProvider: TimelineProvider {
     private let staleAfter: TimeInterval = 5 * 60
@@ -23,7 +23,9 @@ struct PowerTimelineProvider: TimelineProvider {
         }
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<PowerMonitorEntry>) -> Void) {
+    func getTimeline(
+        in context: Context, completion: @escaping (Timeline<PowerMonitorEntry>) -> Void
+    ) {
         let entry = currentEntry()
         let timeline = Timeline(
             entries: [entry],
@@ -37,7 +39,8 @@ struct PowerTimelineProvider: TimelineProvider {
             return PowerMonitorEntry(date: Date(), snapshot: nil)
         }
         guard let data = try? Data(contentsOf: url),
-              let snapshot = try? JSONDecoder().decode(WidgetSnapshot.self, from: data) else {
+            let snapshot = try? JSONDecoder().decode(WidgetSnapshot.self, from: data)
+        else {
             return PowerMonitorEntry(date: Date(), snapshot: nil)
         }
         let age = Date().timeIntervalSince(snapshot.timestamp)

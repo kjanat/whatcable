@@ -98,7 +98,9 @@ public final class VDMIdentityWatcher: ObservableObject {
         identities.removeAll()
         for className in Self.matchedClasses {
             var iter: io_iterator_t = 0
-            if IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(className), &iter) == KERN_SUCCESS {
+            if IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(className), &iter)
+                == KERN_SUCCESS
+            {
                 handleAdded(iter)
                 IOObjectRelease(iter)
             }
@@ -109,9 +111,8 @@ public final class VDMIdentityWatcher: ObservableObject {
         while case let service = IOIteratorNext(iterator), service != 0 {
             if let update = makeUpdate(from: service) {
                 identities.removeAll {
-                    $0.portIndex == update.portIndex &&
-                    $0.portType == update.portType &&
-                    $0.endpoint == update.endpoint
+                    $0.portIndex == update.portIndex && $0.portType == update.portType
+                        && $0.endpoint == update.endpoint
                 }
                 identities.append(update)
                 continuation?.yield(update)
@@ -125,14 +126,13 @@ public final class VDMIdentityWatcher: ObservableObject {
             defer { IOObjectRelease(service) }
             if let endpoint = Self.endpoint(for: service) {
                 func read(_ key: String) -> Any? {
-                    IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+                    IORegistryEntryCreateCFProperty(
+                        service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
                 }
                 let portIndex = wcPortIndex(read: read, service: service)
                 let portType = wcPortType(read: read, service: service)
                 identities.removeAll {
-                    $0.portIndex == portIndex &&
-                    $0.portType == portType &&
-                    $0.endpoint == endpoint
+                    $0.portIndex == portIndex && $0.portType == portType && $0.endpoint == endpoint
                 }
             }
         }
@@ -142,14 +142,17 @@ public final class VDMIdentityWatcher: ObservableObject {
         guard let endpoint = Self.endpoint(for: service) else { return nil }
 
         func read(_ key: String) -> Any? {
-            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                .takeRetainedValue()
         }
 
         let metadata = wcDictionary(read("Metadata"))
         let vdos = wcArray(metadata["VDOs"]).compactMap(wcData)
         let identity = VDMIdentity(
-            vendorId: wcInt(metadata["VID"]) != 0 ? wcInt(metadata["VID"]) : wcInt(read("Vendor ID")),
-            productId: wcInt(metadata["PID"]) != 0 ? wcInt(metadata["PID"]) : wcInt(read("Product ID")),
+            vendorId: wcInt(metadata["VID"]) != 0
+                ? wcInt(metadata["VID"]) : wcInt(read("Vendor ID")),
+            productId: wcInt(metadata["PID"]) != 0
+                ? wcInt(metadata["PID"]) : wcInt(read("Product ID")),
             bcdDevice: wcInt(metadata["bcdDevice"]),
             specRevision: wcInt(metadata["Specification Revision"]) != 0
                 ? wcInt(metadata["Specification Revision"])

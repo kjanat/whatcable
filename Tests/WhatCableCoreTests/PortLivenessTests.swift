@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("Port Liveness")
@@ -68,34 +69,38 @@ struct PortLivenessTests {
 
     @Test("Nothing present is not live")
     func nothingPresentIsNotLive() {
-        #expect(!isPortLive(
-            port: usbCPort(connectionActive: false),
-            powerSources: [], identities: [], matchingDevices: []
-        ))
+        #expect(
+            !isPortLive(
+                port: usbCPort(connectionActive: false),
+                powerSources: [], identities: [], matchingDevices: []
+            ))
     }
 
     @Test("USB device makes port live")
     func usbDeviceMakesPortLive() {
-        #expect(isPortLive(
-            port: usbCPort(connectionActive: false),
-            powerSources: [], identities: [], matchingDevices: [usbDevice()]
-        ))
+        #expect(
+            isPortLive(
+                port: usbCPort(connectionActive: false),
+                powerSources: [], identities: [], matchingDevices: [usbDevice()]
+            ))
     }
 
     @Test("USB PD SOP makes port live")
     func usbPDSOPMakesPortLive() {
-        #expect(isPortLive(
-            port: usbCPort(connectionActive: false),
-            powerSources: [], identities: [partnerIdentity()], matchingDevices: []
-        ))
+        #expect(
+            isPortLive(
+                port: usbCPort(connectionActive: false),
+                powerSources: [], identities: [partnerIdentity()], matchingDevices: []
+            ))
     }
 
     @Test("Non-MagSafe connectionActive makes port live")
     func nonMagSafeConnectionActiveMakesPortLive() {
-        #expect(isPortLive(
-            port: usbCPort(connectionActive: true),
-            powerSources: [], identities: [], matchingDevices: []
-        ))
+        #expect(
+            isPortLive(
+                port: usbCPort(connectionActive: true),
+                powerSources: [], identities: [], matchingDevices: []
+            ))
     }
 
     // MARK: - Issue #47 regressions
@@ -106,12 +111,13 @@ struct PortLivenessTests {
         // PowerSourceWatcher held a stale negotiated PDO. The port itself
         // correctly reports connectionActive=false, so the union must not
         // light up purely on the cached source.
-        #expect(!isPortLive(
-            port: usbCPort(connectionActive: false),
-            powerSources: [staleUSBPDSource()],
-            identities: [],
-            matchingDevices: []
-        ))
+        #expect(
+            !isPortLive(
+                port: usbCPort(connectionActive: false),
+                powerSources: [staleUSBPDSource()],
+                identities: [],
+                matchingDevices: []
+            ))
     }
 
     @Test("Stale power source on disconnected MagSafe is not live")
@@ -119,12 +125,13 @@ struct PortLivenessTests {
         // The MagSafe port from issue #47's JSON dump: connectionActive=false,
         // but the watcher still exposes a 30W winning PDO from the previous
         // session. Must not be treated as live.
-        #expect(!isPortLive(
-            port: magSafePort(connectionActive: false),
-            powerSources: [staleUSBPDSource()],
-            identities: [],
-            matchingDevices: []
-        ))
+        #expect(
+            !isPortLive(
+                port: magSafePort(connectionActive: false),
+                powerSources: [staleUSBPDSource()],
+                identities: [],
+                matchingDevices: []
+            ))
     }
 
     @Test("Power source with active connection is live")
@@ -132,18 +139,20 @@ struct PortLivenessTests {
         // Charger genuinely plugged in: power source plus an active
         // connection. This is the case we still want to count as live, on
         // both USB-C and MagSafe.
-        #expect(isPortLive(
-            port: usbCPort(connectionActive: true),
-            powerSources: [staleUSBPDSource()],
-            identities: [],
-            matchingDevices: []
-        ))
-        #expect(isPortLive(
-            port: magSafePort(connectionActive: true),
-            powerSources: [staleUSBPDSource()],
-            identities: [],
-            matchingDevices: []
-        ))
+        #expect(
+            isPortLive(
+                port: usbCPort(connectionActive: true),
+                powerSources: [staleUSBPDSource()],
+                identities: [],
+                matchingDevices: []
+            ))
+        #expect(
+            isPortLive(
+                port: magSafePort(connectionActive: true),
+                powerSources: [staleUSBPDSource()],
+                identities: [],
+                matchingDevices: []
+            ))
     }
 
     @Test("MagSafe connectionActive alone is not live")
@@ -151,9 +160,10 @@ struct PortLivenessTests {
         // The original MagSafe quirk: connectionActive=true lingers for
         // several seconds after unplug. Without any other live signal, we
         // shouldn't trust it.
-        #expect(!isPortLive(
-            port: magSafePort(connectionActive: true),
-            powerSources: [], identities: [], matchingDevices: []
-        ))
+        #expect(
+            !isPortLive(
+                port: magSafePort(connectionActive: true),
+                powerSources: [], identities: [], matchingDevices: []
+            ))
     }
 }

@@ -1,6 +1,6 @@
 import SwiftUI
-import WidgetKit
 import WhatCableCore
+import WidgetKit
 
 // MARK: - Widget definition
 
@@ -12,8 +12,14 @@ struct PowerMonitorWidget: Widget {
             PowerMonitorEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName(Text(String(localized: "Power Monitor", bundle: _coreLocalizedBundle)))
-        .description(Text(String(localized: "Battery and charging at a glance.", bundle: _coreLocalizedBundle)))
+        .configurationDisplayName(
+            Text(String(localized: "Power Monitor", bundle: _coreLocalizedBundle))
+        )
+        .description(
+            Text(
+                String(localized: "Battery and charging at a glance.", bundle: _coreLocalizedBundle)
+            )
+        )
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -275,7 +281,8 @@ struct PowerLargeView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         if let sysW = power.systemPowerInWatts {
                             let formatted = String(format: "%.1f", sysW)
-                            let systemDrawFormat = String(localized: "%@W system draw", bundle: _coreLocalizedBundle)
+                            let systemDrawFormat = String(
+                                localized: "%@W system draw", bundle: _coreLocalizedBundle)
                             Text(String(format: systemDrawFormat, formatted))
                                 .font(.callout)
                                 .fontWeight(.semibold)
@@ -346,10 +353,13 @@ struct PowerEmptyStateView: View {
                 .foregroundStyle(.secondary)
             Text(String(localized: "No power data", bundle: _coreLocalizedBundle))
                 .font(.headline)
-            Text(String(localized: "Open WhatCable to start monitoring.", bundle: _coreLocalizedBundle))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            Text(
+                String(
+                    localized: "Open WhatCable to start monitoring.", bundle: _coreLocalizedBundle)
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
         }
     }
 }

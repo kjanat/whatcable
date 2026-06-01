@@ -57,8 +57,14 @@ public final class USBWatcher: ObservableObject {
     }
 
     public func stop() {
-        if addedIter != 0 { IOObjectRelease(addedIter); addedIter = 0 }
-        if removedIter != 0 { IOObjectRelease(removedIter); removedIter = 0 }
+        if addedIter != 0 {
+            IOObjectRelease(addedIter)
+            addedIter = 0
+        }
+        if removedIter != 0 {
+            IOObjectRelease(removedIter)
+            removedIter = 0
+        }
         if let port = notifyPort {
             IONotificationPortDestroy(port)
             notifyPort = nil
@@ -98,8 +104,11 @@ public final class USBWatcher: ObservableObject {
         // IOCFUnserializeBinary crash path described in issue #181 does not
         // apply. See also: AppleHPMInterfaceWatcher.makePort for the contrast.
         var props: Unmanaged<CFMutableDictionary>?
-        guard IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0) == KERN_SUCCESS,
-              let dict = props?.takeRetainedValue() as? [String: Any] else {
+        guard
+            IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0)
+                == KERN_SUCCESS,
+            let dict = props?.takeRetainedValue() as? [String: Any]
+        else {
             return nil
         }
 
@@ -120,7 +129,8 @@ public final class USBWatcher: ObservableObject {
         // not guarantee it leaves the buffer untouched, and USBDevice's
         // contract is that ioClassName is nil when unavailable.
         var classBuf = [CChar](repeating: 0, count: 128)
-        let ioClassName = IOObjectGetClass(service, &classBuf) == KERN_SUCCESS
+        let ioClassName =
+            IOObjectGetClass(service, &classBuf) == KERN_SUCCESS
             ? String(cString: classBuf)
             : nil
 
@@ -163,7 +173,9 @@ public final class USBWatcher: ObservableObject {
     ///     `UsbIOPort` (and for the advanced view).
     ///
     /// Walks up to 20 hops to handle devices behind deeper hub chains.
-    private func controllerInfo(for service: io_service_t, fallback locationID: UInt32) -> (Int?, String?) {
+    private func controllerInfo(for service: io_service_t, fallback locationID: UInt32) -> (
+        Int?, String?
+    ) {
         var current = service
         IOObjectRetain(current)
         defer { IOObjectRelease(current) }
@@ -173,21 +185,23 @@ public final class USBWatcher: ObservableObject {
 
         for _ in 0..<20 {
             var parent: io_service_t = 0
-            guard IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS else {
+            guard IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS
+            else {
                 break
             }
             IOObjectRelease(current)
             current = parent
 
             if portName == nil,
-               let raw = IORegistryEntryCreateCFProperty(
+                let raw = IORegistryEntryCreateCFProperty(
                     current,
                     "UsbIOPort" as CFString,
                     kCFAllocatorDefault,
                     0
-               )?.takeRetainedValue(),
-               let portPath = Self.usbIOPortPath(from: raw),
-               let name = Self.portName(fromUSBIOPortPath: portPath) {
+                )?.takeRetainedValue(),
+                let portPath = Self.usbIOPortPath(from: raw),
+                let name = Self.portName(fromUSBIOPortPath: portPath)
+            {
                 portName = name
             }
 
@@ -195,7 +209,11 @@ public final class USBWatcher: ObservableObject {
             IOObjectGetClass(current, &classBuf)
             let className = String(cString: classBuf)
             if className.hasPrefix("AppleT") && className.hasSuffix("USBXHCI") {
-                if let loc = (IORegistryEntryCreateCFProperty(current, "locationID" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? NSNumber)?.uint32Value {
+                if let loc =
+                    (IORegistryEntryCreateCFProperty(
+                        current, "locationID" as CFString, kCFAllocatorDefault, 0)?
+                    .takeRetainedValue() as? NSNumber)?.uint32Value
+                {
                     bus = Int((loc >> 24) & 0xFF)
                 }
                 break
@@ -248,4 +266,3 @@ public final class USBWatcher: ObservableObject {
         }
     }
 }
-

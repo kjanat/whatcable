@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 /// Reference-scenario tests anchored on the bluevulpine TS3 Plus + Samsung
@@ -132,8 +133,8 @@ struct BluevulpineTS3DockTests {
             devices: [],
             usb3Transports: [],
             cio: Self.ts3CIO(),
-            tbActiveGbps: 40,           // CableSpeed=3 confirms 40 Gbps link
-            hostMaxGbps: 40             // AppleHPMInterfaceType10 = TB4-class
+            tbActiveGbps: 40,  // CableSpeed=3 confirms 40 Gbps link
+            hostMaxGbps: 40  // AppleHPMInterfaceType10 = TB4-class
         )
 
         guard case .fine(let active) = diag?.bottleneck else {
@@ -141,7 +142,8 @@ struct BluevulpineTS3DockTests {
             return
         }
         #expect(active == 40)
-        #expect(diag!.cableSignalConflict == false,
+        #expect(
+            diag!.cableSignalConflict == false,
             "Lintes TB4 cable (40 Gbps e-marker) matches CIO (40 Gbps). No conflict expected.")
         #expect(diag!.facts.cableEmarkerGbps == 40)
         #expect(diag!.facts.cableControllerGbps == 40)
@@ -169,20 +171,26 @@ struct BluevulpineTS3DockTests {
         )
 
         guard case .fine(let active) = diag?.bottleneck else {
-            Issue.record("expected .fine (CIO wins over passive e-marker), got \(String(describing: diag?.bottleneck))")
+            Issue.record(
+                "expected .fine (CIO wins over passive e-marker), got \(String(describing: diag?.bottleneck))"
+            )
             return
         }
         #expect(active == 40)
-        #expect(diag!.cableSignalConflict == true,
+        #expect(
+            diag!.cableSignalConflict == true,
             "Passive e-marker (10 Gbps) disagrees with CIO (40 Gbps). Conflict flag must be set.")
         #expect(diag!.facts.cableEmarkerGbps == 10)
         #expect(diag!.facts.cableControllerGbps == 40)
-        #expect(diag!.facts.cableGbps == 40,
-            "Controller (40) must win over the under-reporting e-marker (10). Got: \(String(describing: diag!.facts.cableGbps))")
+        #expect(
+            diag!.facts.cableGbps == 40,
+            "Controller (40) must win over the under-reporting e-marker (10). Got: \(String(describing: diag!.facts.cableGbps))"
+        )
         // The detail string must surface the conflict in plain language
         // so the user sees that the e-marker and controller disagree,
         // and that the controller is being trusted.
-        #expect(diag!.detail.contains("disagree"),
+        #expect(
+            diag!.detail.contains("disagree"),
             "Detail must explain the e-marker vs controller disagreement: \(diag!.detail)")
     }
 
@@ -214,8 +222,10 @@ struct BluevulpineTS3DockTests {
                 continue
             }
             if case .fine(let active) = diag!.bottleneck, let cable = facts.cableGbps {
-                #expect(cable >= active,
-                    "\(label): .fine(\(active)) with cable=\(cable) Gbps below the active rate is a contradiction (bigskookum class). Either the verdict should not be .fine, or the resolved cable figure should reflect the controller's confirmation.")
+                #expect(
+                    cable >= active,
+                    "\(label): .fine(\(active)) with cable=\(cable) Gbps below the active rate is a contradiction (bigskookum class). Either the verdict should not be .fine, or the resolved cable figure should reflect the controller's confirmation."
+                )
             }
         }
     }

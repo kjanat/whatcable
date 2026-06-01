@@ -1,7 +1,7 @@
 import Foundation
 import ServiceManagement
-import os.log
 import WhatCableCore
+import os.log
 
 /// User-facing preferences, persisted in UserDefaults and (where relevant)
 /// reflected into system services like SMAppService.
@@ -9,7 +9,8 @@ import WhatCableCore
 final class AppSettings: ObservableObject {
     static let shared = AppSettings()
 
-    private nonisolated static let log = Logger(subsystem: "uk.whatcable.whatcable", category: "settings")
+    private nonisolated static let log = Logger(
+        subsystem: "uk.whatcable.whatcable", category: "settings")
 
     private enum Keys {
         static let notifyOnChanges = "notifyOnChanges"
@@ -21,7 +22,6 @@ final class AppSettings: ObservableObject {
         static let testKitLastRunVersion = "testKitLastRunVersion"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
     }
-
 
     @Published var launchAtLogin: Bool {
         didSet {
@@ -84,8 +84,12 @@ final class AppSettings: ObservableObject {
 
     @Published var fontSize: Double {
         didSet {
-            let clamped = min(max(fontSize, Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
-            if clamped != fontSize { fontSize = clamped; return }
+            let clamped = min(
+                max(fontSize, Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
+            if clamped != fontSize {
+                fontSize = clamped
+                return
+            }
             guard fontSize != oldValue else { return }
             UserDefaults.standard.set(fontSize, forKey: Keys.fontSize)
         }
@@ -141,7 +145,8 @@ final class AppSettings: ObservableObject {
                 try SMAppService.mainApp.unregister()
             }
         } catch {
-            Self.log.error("Failed to update launch at login: \(error.localizedDescription, privacy: .public)")
+            Self.log.error(
+                "Failed to update launch at login: \(error.localizedDescription, privacy: .public)")
             // Roll the published value back so the UI matches reality.
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -153,4 +158,3 @@ final class AppSettings: ObservableObject {
         }
     }
 }
-

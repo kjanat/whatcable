@@ -1,10 +1,10 @@
-import Foundation
 import Combine
-import WidgetKit
-import os.log
+import Foundation
+import WhatCableAppKit
 import WhatCableCore
 import WhatCableDarwinBackend
-import WhatCableAppKit
+import WidgetKit
+import os.log
 
 /// Writes a pre-computed WidgetSnapshot to the macOS team-prefixed App Group
 /// shared container whenever cable state changes, then tells WidgetKit to
@@ -52,7 +52,9 @@ final class WidgetDataWriter {
     func start() {
         guard !isStarted else { return }
         isStarted = true
-        Self.log.debug("WidgetDataWriter starting (sharedFileURL: \(WidgetSnapshot.sharedFileURL?.path ?? "nil"))")
+        Self.log.debug(
+            "WidgetDataWriter starting (sharedFileURL: \(WidgetSnapshot.sharedFileURL?.path ?? "nil"))"
+        )
         // Write an initial snapshot once watchers have had a tick to populate.
         DispatchQueue.main.async { [weak self] in
             self?.scheduleWrite()
@@ -128,7 +130,11 @@ final class WidgetDataWriter {
             // Skip the write if the port data hasn't changed. Compare
             // ports only, not the timestamp, otherwise every snapshot
             // looks different and the dedup is useless.
-            if snapshot.ports == lastSnapshot?.ports && snapshot.powerState == lastSnapshot?.powerState { return }
+            if snapshot.ports == lastSnapshot?.ports
+                && snapshot.powerState == lastSnapshot?.powerState
+            {
+                return
+            }
 
             // Only update lastSnapshot after a confirmed write. If the
             // write fails (missing container, encoding error), we want
@@ -151,9 +157,10 @@ final class WidgetDataWriter {
         guard writeToDefaults(snapshot) else { return }
         lastSnapshot = snapshot
         WidgetCenter.shared.reloadAllTimelines()
-        Self.log.debug("Widget heartbeat: refreshed timestamp and reloaded timelines (\(snapshot.ports.count) ports)")
+        Self.log.debug(
+            "Widget heartbeat: refreshed timestamp and reloaded timelines (\(snapshot.ports.count) ports)"
+        )
     }
-
 
     private func buildSnapshot() -> WidgetSnapshot {
         let batteryResult = AppleSmartBatteryReader.read()
@@ -230,8 +237,9 @@ final class WidgetDataWriter {
             // Build per-port power entries from the contributor's port data.
             let portEntries: [WidgetSnapshot.PortPowerEntry] = entries.compactMap { entry in
                 guard let key = entry.portKey,
-                      let samples = contributor.recentPower(forPortKey: key),
-                      let latest = samples.last, latest > 0 else { return nil }
+                    let samples = contributor.recentPower(forPortKey: key),
+                    let latest = samples.last, latest > 0
+                else { return nil }
                 return WidgetSnapshot.PortPowerEntry(
                     portKey: key,
                     portName: entry.portName,
@@ -273,10 +281,14 @@ final class WidgetDataWriter {
         do {
             let data = try JSONEncoder().encode(snapshot)
             try data.write(to: url, options: .atomic)
-            Self.log.debug("Widget snapshot written to \(url.path, privacy: .public): \(snapshot.ports.count, privacy: .public) ports, \(data.count, privacy: .public) bytes")
+            Self.log.debug(
+                "Widget snapshot written to \(url.path, privacy: .public): \(snapshot.ports.count, privacy: .public) ports, \(data.count, privacy: .public) bytes"
+            )
             return true
         } catch {
-            Self.log.error("Failed to write widget snapshot at \(url.path, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            Self.log.error(
+                "Failed to write widget snapshot at \(url.path, privacy: .public): \(error.localizedDescription, privacy: .public)"
+            )
             return false
         }
     }

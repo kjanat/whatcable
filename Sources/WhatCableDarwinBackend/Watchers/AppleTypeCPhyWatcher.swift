@@ -51,8 +51,10 @@ public final class AppleTypeCPhyWatcher: ObservableObject {
 
         for cls in Self.candidateClasses {
             var iter: io_iterator_t = 0
-            if IOServiceAddMatchingNotification(port, kIOMatchedNotification,
-                                                 IOServiceMatching(cls), cb, selfPtr, &iter) == KERN_SUCCESS {
+            if IOServiceAddMatchingNotification(
+                port, kIOMatchedNotification,
+                IOServiceMatching(cls), cb, selfPtr, &iter) == KERN_SUCCESS
+            {
                 iterators.append(iter)
                 while case let s = IOIteratorNext(iter), s != 0 {
                     IOObjectRelease(s)
@@ -80,7 +82,10 @@ public final class AppleTypeCPhyWatcher: ObservableObject {
 
         for cls in Self.candidateClasses {
             var iter: io_iterator_t = 0
-            guard IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(cls), &iter) == KERN_SUCCESS else {
+            guard
+                IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(cls), &iter)
+                    == KERN_SUCCESS
+            else {
                 continue
             }
             defer { IOObjectRelease(iter) }
@@ -122,7 +127,8 @@ public final class AppleTypeCPhyWatcher: ObservableObject {
         // typically when the service is being torn down mid-read. The
         // per-key call has no such failure path. See issue #181.
         func read(_ key: String) -> Any? {
-            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                .takeRetainedValue()
         }
 
         let phyID = (read("AppleTypeCPhyID") as? NSNumber)?.intValue ?? -1

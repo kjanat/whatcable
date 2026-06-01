@@ -45,8 +45,9 @@ public enum ChargerWattageSource: Hashable {
         // the adapter. The single-active-port guard preserves the #46
         // multi-charger protection. See issue #154.
         if let source, source.name == "Brick ID",
-           activePortCount == 1,
-           let adapterW = adapter?.watts, adapterW > 0 {
+            activePortCount == 1,
+            let adapterW = adapter?.watts, adapterW > 0
+        {
             let brickW = Int((Double(source.maxPowerMW) / 1000).rounded())
             if adapterW > brickW {
                 return .systemAdapterFallback(watts: adapterW)
@@ -77,8 +78,9 @@ public enum ChargerWattageSource: Hashable {
         //
         // (b) The system adapter reports a positive wattage.
         if activePortCount == 1,
-           let adapterW = adapter?.watts,
-           adapterW > 0 {
+            let adapterW = adapter?.watts,
+            adapterW > 0
+        {
             return .systemAdapterFallback(watts: adapterW)
         }
 

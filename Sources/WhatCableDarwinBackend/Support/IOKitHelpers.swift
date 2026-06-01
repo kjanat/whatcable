@@ -61,7 +61,8 @@ public func wcPortIndex(from dict: [String: Any], service: io_service_t? = nil) 
     guard let service else { return 0 }
     var locBuf = [CChar](repeating: 0, count: 128)
     if IORegistryEntryGetLocationInPlane(service, kIOServicePlane, &locBuf) == KERN_SUCCESS,
-       let n = Int(String(cString: locBuf), radix: 16) {
+        let n = Int(String(cString: locBuf), radix: 16)
+    {
         return n
     }
     return 0
@@ -69,12 +70,14 @@ public func wcPortIndex(from dict: [String: Any], service: io_service_t? = nil) 
 
 public func wcPortIndex(read: (String) -> Any?, service: io_service_t? = nil) -> Int {
     for key in ["PortIndex", "ParentPortNumber", "ParentBuiltInPortNumber", "PortNumber"] {
-        let n = wcInt(read(key)); if n != 0 { return n }
+        let n = wcInt(read(key))
+        if n != 0 { return n }
     }
     guard let service else { return 0 }
     var locBuf = [CChar](repeating: 0, count: 128)
     if IORegistryEntryGetLocationInPlane(service, kIOServicePlane, &locBuf) == KERN_SUCCESS,
-       let n = Int(String(cString: locBuf), radix: 16) {
+        let n = Int(String(cString: locBuf), radix: 16)
+    {
         return n
     }
     return 0
@@ -89,7 +92,8 @@ public func wcPortType(from dict: [String: Any], service: io_service_t? = nil) -
     defer { IOObjectRelease(current) }
     for _ in 0..<5 {
         var parent: io_registry_entry_t = 0
-        guard IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS else {
+        guard IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS
+        else {
             break
         }
         IOObjectRelease(current)
@@ -98,7 +102,10 @@ public func wcPortType(from dict: [String: Any], service: io_service_t? = nil) -
         // Read the single key individually rather than bulk-fetching all
         // properties. The bulk fetch can abort inside IOCFUnserializeBinary
         // when the kernel returns a malformed blob mid-teardown. See #181.
-        if let type = IORegistryEntryCreateCFProperty(current, "PortTypeDescription" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? String {
+        if let type = IORegistryEntryCreateCFProperty(
+            current, "PortTypeDescription" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            as? String
+        {
             return type
         }
     }
@@ -114,13 +121,17 @@ public func wcPortType(read: (String) -> Any?, service: io_service_t? = nil) -> 
     defer { IOObjectRelease(current) }
     for _ in 0..<5 {
         var parent: io_registry_entry_t = 0
-        guard IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS else {
+        guard IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS
+        else {
             break
         }
         IOObjectRelease(current)
         current = parent
 
-        if let type = IORegistryEntryCreateCFProperty(current, "PortTypeDescription" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? String {
+        if let type = IORegistryEntryCreateCFProperty(
+            current, "PortTypeDescription" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            as? String
+        {
             return type
         }
     }

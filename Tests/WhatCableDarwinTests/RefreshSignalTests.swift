@@ -1,5 +1,6 @@
-import Testing
 import Combine
+import Testing
+
 @testable import WhatCableAppKit
 
 @Suite("RefreshSignal")

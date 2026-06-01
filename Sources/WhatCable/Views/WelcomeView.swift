@@ -16,35 +16,58 @@ struct WelcomeView: View {
             Text(String(localized: "Welcome to WhatCable", bundle: _appLocalizedBundle))
                 .font(.title.bold())
 
-            Text(String(localized: "See what your USB-C cables, chargers, and devices can actually do.", bundle: _appLocalizedBundle))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            Text(
+                String(
+                    localized: "See what your USB-C cables, chargers, and devices can actually do.",
+                    bundle: _appLocalizedBundle)
+            )
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
 
             VStack(alignment: .leading, spacing: 16) {
-                Text(String(localized: "How would you like to use WhatCable?", bundle: _appLocalizedBundle))
-                    .font(.headline)
+                Text(
+                    String(
+                        localized: "How would you like to use WhatCable?",
+                        bundle: _appLocalizedBundle)
+                )
+                .font(.headline)
 
                 modeOption(
                     icon: "menubar.rectangle",
                     title: String(localized: "Menu bar", bundle: _appLocalizedBundle),
-                    description: String(localized: "Sits in the menu bar at the top of your screen. Click the cable icon any time to check a connection.", bundle: _appLocalizedBundle),
+                    description: String(
+                        localized:
+                            "Sits in the menu bar at the top of your screen. Click the cable icon any time to check a connection.",
+                        bundle: _appLocalizedBundle),
                     badge: String(localized: "Recommended", bundle: _appLocalizedBundle),
                     isSelected: useMenuBar
-                ) { useMenuBar = true; onSelectionChanged?(true) }
+                ) {
+                    useMenuBar = true
+                    onSelectionChanged?(true)
+                }
 
                 modeOption(
                     icon: "macwindow",
                     title: String(localized: "Dock app", bundle: _appLocalizedBundle),
-                    description: String(localized: "Opens as a regular window with a Dock icon, like most apps.", bundle: _appLocalizedBundle),
+                    description: String(
+                        localized: "Opens as a regular window with a Dock icon, like most apps.",
+                        bundle: _appLocalizedBundle),
                     badge: nil,
                     isSelected: !useMenuBar
-                ) { useMenuBar = false; onSelectionChanged?(false) }
+                ) {
+                    useMenuBar = false
+                    onSelectionChanged?(false)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(String(localized: "You can change this any time in Settings.", bundle: _appLocalizedBundle))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text(
+                String(
+                    localized: "You can change this any time in Settings.",
+                    bundle: _appLocalizedBundle)
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
 
             Button(String(localized: "Get Started", bundle: _appLocalizedBundle)) {
                 onComplete(useMenuBar)
@@ -102,7 +125,9 @@ struct WelcomeView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(isSelected ? Color.accentColor.opacity(0.3) : Color.secondary.opacity(0.2), lineWidth: 1)
+                    .strokeBorder(
+                        isSelected ? Color.accentColor.opacity(0.3) : Color.secondary.opacity(0.2),
+                        lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

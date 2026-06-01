@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 /// Unit tests for TRMTransport model.
@@ -41,7 +42,8 @@ struct TRMTransportTests {
 
     @Test("Summary label falls back to Supervised")
     func summaryLabelFallsBackToSupervised() {
-        let t = makeTRM(transportType: "DisplayPort", stateDescription: nil, transportSupervised: true)
+        let t = makeTRM(
+            transportType: "DisplayPort", stateDescription: nil, transportSupervised: true)
         #expect(t.summaryLabel == "DisplayPort: Supervised")
     }
 

@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 @Suite("Cable Trust Report")
@@ -13,7 +14,7 @@ struct CableTrustReportTests {
     private func cableIdentity(
         vendorID: Int = 0x05AC,
         endpoint: USBPDSOP.Endpoint = .sopPrime,
-        cableVDO: UInt32 = (0b10 << 5) | 0b011 | (1 << 13) // USB4 Gen 3, 5A, ~1m
+        cableVDO: UInt32 = (0b10 << 5) | 0b011 | (1 << 13)  // USB4 Gen 3, 5A, ~1m
     ) -> USBPDSOP {
         USBPDSOP(
             id: 1,
@@ -27,7 +28,7 @@ struct CableTrustReportTests {
                 (3 << 27) | UInt32(vendorID),
                 0,
                 0,
-                cableVDO
+                cableVDO,
             ],
             specRevision: 3
         )
@@ -74,11 +75,12 @@ struct CableTrustReportTests {
         // VID=0, speed=6 (reserved), current=3 (reserved), valid latency
         let vdo = UInt32(0b110) | UInt32(3 << 5) | Self.validLatency
         let report = CableTrustReport(identity: cableIdentity(vendorID: 0, cableVDO: vdo))
-        #expect(report.flags == [
-            .zeroVendorID,
-            .reservedSpeedEncoding(6),
-            .reservedCurrentEncoding(3)
-        ])
+        #expect(
+            report.flags == [
+                .zeroVendorID,
+                .reservedSpeedEncoding(6),
+                .reservedCurrentEncoding(3),
+            ])
     }
 
     // MARK: - Cable Latency
@@ -86,7 +88,7 @@ struct CableTrustReportTests {
     @Test("Reserved cable latency flags")
     func reservedCableLatencyFlags() {
         // 0000 invalid for both cable types
-        let zeroLatency = UInt32(0b011) | UInt32(2 << 5) // no latency bits
+        let zeroLatency = UInt32(0b011) | UInt32(2 << 5)  // no latency bits
         let report = CableTrustReport(identity: cableIdentity(cableVDO: zeroLatency))
         #expect(report.flags == [.reservedCableLatencyEncoding(0)])
     }
@@ -104,10 +106,10 @@ struct CableTrustReportTests {
             productID: 0,
             bcdDevice: 0,
             vdos: [
-                UInt32(4 << 27) | UInt32(0x05AC), // active cable ID header
+                UInt32(4 << 27) | UInt32(0x05AC),  // active cable ID header
                 0,
                 0,
-                UInt32(0b011) | UInt32(2 << 5) | (UInt32(0b1010) << 13) | UInt32(0b10 << 11) // ~2000 ns, valid active termination
+                UInt32(0b011) | UInt32(2 << 5) | (UInt32(0b1010) << 13) | UInt32(0b10 << 11),  // ~2000 ns, valid active termination
             ],
             specRevision: 3
         )
@@ -178,10 +180,11 @@ struct CableTrustReportTests {
         // want H3 firing as a noisier "0x0000 not registered" message.
         let report = CableTrustReport(identity: cableIdentity(vendorID: 0))
         #expect(report.flags == [.zeroVendorID])
-        #expect(report.flags.contains { flag in
-            if case .vidNotInUSBIFList = flag { return true }
-            return false
-        } == false)
+        #expect(
+            report.flags.contains { flag in
+                if case .vidNotInUSBIFList = flag { return true }
+                return false
+            } == false)
     }
 
     @Test("H3 combines with reserved encodings")
@@ -189,10 +192,11 @@ struct CableTrustReportTests {
         // Unregistered VID + reserved speed bits = both flags.
         let vdo = UInt32(0b111) | UInt32(2 << 5) | Self.validLatency
         let report = CableTrustReport(identity: cableIdentity(vendorID: 0xDEAD, cableVDO: vdo))
-        #expect(report.flags == [
-            .vidNotInUSBIFList(0xDEAD),
-            .reservedSpeedEncoding(7)
-        ])
+        #expect(
+            report.flags == [
+                .vidNotInUSBIFList(0xDEAD),
+                .reservedSpeedEncoding(7),
+            ])
     }
 
     // MARK: - H6 / H7 / H9a propagate from decoder to trust report

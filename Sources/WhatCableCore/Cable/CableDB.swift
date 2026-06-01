@@ -1,5 +1,14 @@
 import Foundation
-import SQLite3
+
+#if canImport(SQLite3)
+import SQLite3  // Apple platforms ship the SQLite3 module
+#elseif canImport(CSQLite)
+import CSQLite  // Linux: system-library shim (see Sources/CSQLite)
+#else
+#error(
+    "Neither SQLite3 nor CSQLite is available on this platform/toolchain. On Linux, add the CSQLite system-library target and install the SQLite dev headers (e.g. libsqlite3-dev)."
+)
+#endif
 
 /// Read-only SQLite-backed lookup for vendors and known cables.
 ///
@@ -8,8 +17,10 @@ import SQLite3
 /// is closed. For ~14k vendors and a handful of cables this is a few
 /// hundred KB of resident memory, same as the old TSV loader.
 ///
-/// Uses the system SQLite3 C API (a macOS system framework), so there's
-/// no SPM dependency to add.
+/// Uses the system SQLite3 C API. On macOS that's the built-in `SQLite3`
+/// system framework (no SPM dependency); on Linux it's the `CSQLite` SPM
+/// systemLibrary target (see `Sources/CSQLite`), which links the system
+/// `libsqlite3`. Either way the SQLite C symbols are the same.
 public enum CableDB {
     /// Vendor entry with provenance tracking.
     struct VendorEntry {
@@ -92,15 +103,19 @@ private struct Store {
     let cables: [CableKey: [CuratedCable]]
 
     static func load() -> Store {
-        guard let url = Bundle.module.url(forResource: "whatcable", withExtension: "db")
-                ?? findResourceURL(name: "whatcable", ext: "db") else {
+        guard
+            let url = Bundle.module.url(forResource: "whatcable", withExtension: "db")
+                ?? findResourceURL(name: "whatcable", ext: "db")
+        else {
             return Store(vendors: [:], cables: [:])
         }
 
         var db: OpaquePointer?
-        guard sqlite3_open_v2(
-            url.path, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil
-        ) == SQLITE_OK else {
+        guard
+            sqlite3_open_v2(
+                url.path, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil
+            ) == SQLITE_OK
+        else {
             return Store(vendors: [:], cables: [:])
         }
         defer { sqlite3_close(db) }
@@ -113,9 +128,11 @@ private struct Store {
 
     private static func loadVendors(db: OpaquePointer) -> [Int: CableDB.VendorEntry] {
         var stmt: OpaquePointer?
-        guard sqlite3_prepare_v2(
-            db, "SELECT vid, name, source FROM vendors", -1, &stmt, nil
-        ) == SQLITE_OK else {
+        guard
+            sqlite3_prepare_v2(
+                db, "SELECT vid, name, source FROM vendors", -1, &stmt, nil
+            ) == SQLITE_OK
+        else {
             return [:]
         }
         defer { sqlite3_finalize(stmt) }
@@ -126,7 +143,8 @@ private struct Store {
         while sqlite3_step(stmt) == SQLITE_ROW {
             let vid = Int(sqlite3_column_int(stmt, 0))
             guard let namePtr = sqlite3_column_text(stmt, 1),
-                  let sourcePtr = sqlite3_column_text(stmt, 2) else { continue }
+                let sourcePtr = sqlite3_column_text(stmt, 2)
+            else { continue }
             let name = String(cString: namePtr)
             let source = String(cString: sourcePtr)
             map[vid] = CableDB.VendorEntry(name: name, source: source)
@@ -136,14 +154,17 @@ private struct Store {
 
     private static func loadCables(db: OpaquePointer) -> [CableKey: [CuratedCable]] {
         var stmt: OpaquePointer?
-        guard sqlite3_prepare_v2(
-            db, """
-            SELECT vid, pid, cable_vdo, brand, speed, power, type, issue_url
-            FROM cables
-            ORDER BY vid, pid, cable_vdo, brand
-            """,
-            -1, &stmt, nil
-        ) == SQLITE_OK else {
+        guard
+            sqlite3_prepare_v2(
+                db,
+                """
+                SELECT vid, pid, cable_vdo, brand, speed, power, type, issue_url
+                FROM cables
+                ORDER BY vid, pid, cable_vdo, brand
+                """,
+                -1, &stmt, nil
+            ) == SQLITE_OK
+        else {
             return [:]
         }
         defer { sqlite3_finalize(stmt) }
@@ -156,13 +177,14 @@ private struct Store {
             guard let brandPtr = sqlite3_column_text(stmt, 3) else { continue }
 
             let key = CableKey(vid: vid, pid: pid, cableVDO: cableVDO)
-            map[key, default: []].append(CuratedCable(
-                brand: String(cString: brandPtr),
-                speed: sqlite3_column_text(stmt, 4).map { String(cString: $0) } ?? "",
-                power: sqlite3_column_text(stmt, 5).map { String(cString: $0) } ?? "",
-                type: sqlite3_column_text(stmt, 6).map { String(cString: $0) } ?? "",
-                issueURL: sqlite3_column_text(stmt, 7).map { String(cString: $0) } ?? ""
-            ))
+            map[key, default: []].append(
+                CuratedCable(
+                    brand: String(cString: brandPtr),
+                    speed: sqlite3_column_text(stmt, 4).map { String(cString: $0) } ?? "",
+                    power: sqlite3_column_text(stmt, 5).map { String(cString: $0) } ?? "",
+                    type: sqlite3_column_text(stmt, 6).map { String(cString: $0) } ?? "",
+                    issueURL: sqlite3_column_text(stmt, 7).map { String(cString: $0) } ?? ""
+                ))
         }
         return map
     }
@@ -199,7 +221,8 @@ func findResourceURL(name: String, ext: String) -> URL? {
     }
 
     for root in roots {
-        let viaBundle = root
+        let viaBundle =
+            root
             .appendingPathComponent("\(bundleName).bundle")
             .appendingPathComponent("\(name).\(ext)")
         if fm.fileExists(atPath: viaBundle.path) { return viaBundle }

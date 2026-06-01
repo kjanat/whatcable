@@ -1,5 +1,6 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import WhatCableCore
 
 @Suite("Localisation")
@@ -9,12 +10,16 @@ struct LocalisationTests {
     func stringFilesHaveManyKeys() throws {
         let bundle = Bundle.module
         let url = try #require(
-            bundle.url(forResource: "Localizable", withExtension: "strings", subdirectory: "en.lproj"),
+            bundle.url(
+                forResource: "Localizable", withExtension: "strings", subdirectory: "en.lproj"),
             "en.lproj/Localizable.strings not found in bundle"
         )
         let content = try String(contentsOf: url, encoding: .utf8)
-        let keyLines = content.components(separatedBy: "\n").filter { $0.contains(" = ") && !$0.hasPrefix("//") }
-        #expect(keyLines.count > 50, "en.lproj/Localizable.strings should have more than 50 entries")
+        let keyLines = content.components(separatedBy: "\n").filter {
+            $0.contains(" = ") && !$0.hasPrefix("//")
+        }
+        #expect(
+            keyLines.count > 50, "en.lproj/Localizable.strings should have more than 50 entries")
     }
 
     @Test("English source strings resolve to themselves")
@@ -41,19 +46,23 @@ struct LocalisationTests {
     ///
     /// Files are read from the source tree (not the test bundle) so a single
     /// test in this target can validate every target's `.lproj` set.
-    @Test("Localisation key + format-specifier parity", arguments: [
-        "Sources/WhatCableCore/Resources",
-        "Sources/WhatCable/Resources",
-    ])
+    @Test(
+        "Localisation key + format-specifier parity",
+        arguments: [
+            "Sources/WhatCableCore/Resources",
+            "Sources/WhatCable/Resources",
+        ])
     func localisationParity(resourceDir: String) throws {
         let repoRoot = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()   // WhatCableCoreTests
-            .deletingLastPathComponent()   // Tests
-            .deletingLastPathComponent()   // repo root
+            .deletingLastPathComponent()  // WhatCableCoreTests
+            .deletingLastPathComponent()  // Tests
+            .deletingLastPathComponent()  // repo root
         let base = repoRoot.appendingPathComponent(resourceDir)
 
         let enStrings = try loadStrings(base.appendingPathComponent("en.lproj/Localizable.strings"))
-        #expect(enStrings.count > 20, "\(resourceDir)/en.lproj is unexpectedly small (\(enStrings.count) keys)")
+        #expect(
+            enStrings.count > 20,
+            "\(resourceDir)/en.lproj is unexpectedly small (\(enStrings.count) keys)")
         let enKeys = Set(enStrings.keys)
 
         let lprojs = try FileManager.default
@@ -64,7 +73,8 @@ struct LocalisationTests {
 
         for lproj in lprojs {
             let lang = String(lproj.dropLast(".lproj".count))
-            let strings = try loadStrings(base.appendingPathComponent("\(lproj)/Localizable.strings"))
+            let strings = try loadStrings(
+                base.appendingPathComponent("\(lproj)/Localizable.strings"))
 
             let missing = enKeys.subtracting(strings.keys).sorted()
             let extra = Set(strings.keys).subtracting(enKeys).sorted()
@@ -102,7 +112,8 @@ struct LocalisationTests {
         for raw in content.components(separatedBy: "\n") {
             let trimmed = raw.trimmingCharacters(in: .whitespaces)
             let ns = trimmed as NSString
-            guard let m = line.firstMatch(in: trimmed, range: NSRange(location: 0, length: ns.length))
+            guard
+                let m = line.firstMatch(in: trimmed, range: NSRange(location: 0, length: ns.length))
             else { continue }
             let key = ns.substring(with: m.range(at: 1))
             if key.isEmpty { continue }

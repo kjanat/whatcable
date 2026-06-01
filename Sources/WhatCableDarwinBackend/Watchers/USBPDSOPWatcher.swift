@@ -42,17 +42,21 @@ public final class USBPDSOPWatcher: ObservableObject {
 
         for className in Self.matchedClasses {
             var addedIter: io_iterator_t = 0
-            if IOServiceAddMatchingNotification(port, kIOMatchedNotification,
+            if IOServiceAddMatchingNotification(
+                port, kIOMatchedNotification,
                 IOServiceMatching(className),
-                added, selfPtr, &addedIter) == KERN_SUCCESS {
+                added, selfPtr, &addedIter) == KERN_SUCCESS
+            {
                 handleAdded(addedIter)
                 iterators.append(addedIter)
             }
 
             var removedIter: io_iterator_t = 0
-            if IOServiceAddMatchingNotification(port, kIOTerminatedNotification,
+            if IOServiceAddMatchingNotification(
+                port, kIOTerminatedNotification,
                 IOServiceMatching(className),
-                removed, selfPtr, &removedIter) == KERN_SUCCESS {
+                removed, selfPtr, &removedIter) == KERN_SUCCESS
+            {
                 handleRemoved(removedIter)
                 iterators.append(removedIter)
             }
@@ -62,7 +66,10 @@ public final class USBPDSOPWatcher: ObservableObject {
     public func stop() {
         for iter in iterators where iter != 0 { IOObjectRelease(iter) }
         iterators.removeAll()
-        if let p = notifyPort { IONotificationPortDestroy(p); notifyPort = nil }
+        if let p = notifyPort {
+            IONotificationPortDestroy(p)
+            notifyPort = nil
+        }
         identities.removeAll()
     }
 
@@ -72,11 +79,14 @@ public final class USBPDSOPWatcher: ObservableObject {
         var rebuilt: [USBPDSOP] = []
         for className in Self.matchedClasses {
             var iter: io_iterator_t = 0
-            if IOServiceGetMatchingServices(kIOMainPortDefault,
-                IOServiceMatching(className), &iter) == KERN_SUCCESS {
+            if IOServiceGetMatchingServices(
+                kIOMainPortDefault,
+                IOServiceMatching(className), &iter) == KERN_SUCCESS
+            {
                 while case let service = IOIteratorNext(iter), service != 0 {
                     if let identity = makeIdentity(from: service),
-                       !rebuilt.contains(where: { $0.id == identity.id }) {
+                        !rebuilt.contains(where: { $0.id == identity.id })
+                    {
                         rebuilt.append(identity)
                     }
                     IOObjectRelease(service)
@@ -90,7 +100,8 @@ public final class USBPDSOPWatcher: ObservableObject {
     private func handleAdded(_ iter: io_iterator_t) {
         while case let service = IOIteratorNext(iter), service != 0 {
             if let identity = makeIdentity(from: service),
-               !identities.contains(where: { $0.id == identity.id }) {
+                !identities.contains(where: { $0.id == identity.id })
+            {
                 identities.append(identity)
             }
             IOObjectRelease(service)
@@ -117,11 +128,13 @@ public final class USBPDSOPWatcher: ObservableObject {
         // typically when the service is being torn down mid-read. The
         // per-key call has no such failure path. See issue #181.
         func read(_ key: String) -> Any? {
-            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                .takeRetainedValue()
         }
 
         var classNameBuf = [CChar](repeating: 0, count: 128)
-        let className: String? = (IOObjectGetClass(service, &classNameBuf) == KERN_SUCCESS)
+        let className: String? =
+            (IOObjectGetClass(service, &classNameBuf) == KERN_SUCCESS)
             ? String(cString: classNameBuf)
             : nil
 
@@ -160,10 +173,13 @@ public final class USBPDSOPWatcher: ObservableObject {
             ?? "Unknown"
     }
 
-    nonisolated static func endpoint(read: (String) -> Any?, className: String? = nil) -> USBPDSOP.Endpoint {
+    nonisolated static func endpoint(read: (String) -> Any?, className: String? = nil)
+        -> USBPDSOP.Endpoint
+    {
         if let name = (read("ComponentName") as? String)
             ?? (read("AddressDescription") as? String)
-            ?? (read("Address Description") as? String) {
+            ?? (read("Address Description") as? String)
+        {
             return USBPDSOP.Endpoint(rawValue: name) ?? .unknown
         }
         // The IOKit class name is the most reliable signal: macOS exposes
@@ -191,10 +207,12 @@ public final class USBPDSOPWatcher: ObservableObject {
     /// BuiltIn keys must take priority so PD identity and power data resolve
     /// to the same portKey for a given physical port.
     nonisolated static func parentPortIdentity(read: (String) -> Any?) -> (type: Int, number: Int) {
-        let type = (read("ParentBuiltInPortType") as? NSNumber)?.intValue
+        let type =
+            (read("ParentBuiltInPortType") as? NSNumber)?.intValue
             ?? (read("ParentPortType") as? NSNumber)?.intValue
             ?? 0
-        let number = (read("ParentBuiltInPortNumber") as? NSNumber)?.intValue
+        let number =
+            (read("ParentBuiltInPortNumber") as? NSNumber)?.intValue
             ?? (read("ParentPortNumber") as? NSNumber)?.intValue
             ?? Int(((read("Priority") as? NSNumber)?.uint64Value ?? 0) & 0xFF)
         return (type, number)
@@ -240,4 +258,3 @@ public final class USBPDSOPWatcher: ObservableObject {
         return identities.filter { $0.portKey == key }
     }
 }
-

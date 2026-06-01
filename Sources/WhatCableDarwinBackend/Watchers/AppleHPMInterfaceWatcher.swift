@@ -25,7 +25,7 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
         "AppleHPMInterfaceType18",
         "AppleTCControllerType10",
         "AppleTCControllerType11",
-        "IOPort"
+        "IOPort",
     ]
 
     private var notifyPort: IONotificationPortRef?
@@ -47,14 +47,17 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         let cb: IOServiceMatchingCallback = { refcon, iterator in
             guard let refcon else { return }
-            let watcher = Unmanaged<AppleHPMInterfaceWatcher>.fromOpaque(refcon).takeUnretainedValue()
+            let watcher = Unmanaged<AppleHPMInterfaceWatcher>.fromOpaque(refcon)
+                .takeUnretainedValue()
             Task { @MainActor in watcher.drain(iterator: iterator) }
         }
 
         for cls in Self.candidateClasses {
             let matching = IOServiceMatching(cls)
             var iter: io_iterator_t = 0
-            if IOServiceAddMatchingNotification(port, kIOMatchedNotification, matching, cb, selfPtr, &iter) == KERN_SUCCESS {
+            if IOServiceAddMatchingNotification(
+                port, kIOMatchedNotification, matching, cb, selfPtr, &iter) == KERN_SUCCESS
+            {
                 iterators.append(iter)
                 drain(iterator: iter)
             }
@@ -87,7 +90,8 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
             if IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter) == KERN_SUCCESS {
                 while case let service = IOIteratorNext(iter), service != 0 {
                     if let port = makePort(from: service),
-                       !rebuilt.contains(where: { $0.id == port.id }) {
+                        !rebuilt.contains(where: { $0.id == port.id })
+                    {
                         rebuilt.append(port)
                         registerInterest(for: service, entryID: port.id)
                     }
@@ -131,7 +135,8 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         let cb: IOServiceInterestCallback = { refcon, _, _, _ in
             guard let refcon else { return }
-            let watcher = Unmanaged<AppleHPMInterfaceWatcher>.fromOpaque(refcon).takeUnretainedValue()
+            let watcher = Unmanaged<AppleHPMInterfaceWatcher>.fromOpaque(refcon)
+                .takeUnretainedValue()
             Task { @MainActor in watcher.refresh() }
         }
         var notification: io_object_t = 0
@@ -182,7 +187,8 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
         // typically when the service is being torn down mid-read. The
         // per-key call has no such failure path. See issue #181.
         func read(_ key: String) -> Any? {
-            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?
+                .takeRetainedValue()
         }
 
         // Pass a bulk-fetch closure for rawProperties so the CLI verbose
@@ -193,7 +199,10 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
         // this closure is only called to populate rawProperties.
         func readAll() -> [String: Any]? {
             var props: Unmanaged<CFMutableDictionary>?
-            guard IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0) == KERN_SUCCESS else {
+            guard
+                IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0)
+                    == KERN_SUCCESS
+            else {
                 return nil
             }
             return props?.takeRetainedValue() as? [String: Any]
@@ -225,7 +234,8 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
             }
 
             var parent: io_service_t = 0
-            guard IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS else {
+            guard IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS
+            else {
                 break
             }
             IOObjectRelease(current)
@@ -234,7 +244,8 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
 
         var locBuf = [CChar](repeating: 0, count: 128)
         if IORegistryEntryGetLocationInPlane(service, kIOServicePlane, &locBuf) == KERN_SUCCESS,
-           let n = Self.busIndex(fromLocation: String(cString: locBuf)) {
+            let n = Self.busIndex(fromLocation: String(cString: locBuf))
+        {
             return n
         }
 
@@ -257,4 +268,3 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
         return Int(location, radix: 16)
     }
 }
-

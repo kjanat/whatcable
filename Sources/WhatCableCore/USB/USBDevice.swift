@@ -93,8 +93,12 @@ public struct USBDevice: Identifiable, Hashable {
     /// presence is gated separately in `DisplayDiagnostic`.
     public var isBillboardDevice: Bool {
         if deviceClass == 0x11 { return true }
-        if let cls = ioClassName, cls.localizedCaseInsensitiveContains("BillboardDevice") { return true }
-        if let name = productName, name.localizedCaseInsensitiveContains("Billboard") { return true }
+        if let cls = ioClassName, cls.localizedCaseInsensitiveContains("BillboardDevice") {
+            return true
+        }
+        if let name = productName, name.localizedCaseInsensitiveContains("Billboard") {
+            return true
+        }
         return false
     }
 
@@ -201,7 +205,8 @@ public struct USBDeviceNode: Identifiable {
                 continue
             }
             if let parentLoc = USBDevice.parentLocationID(device.locationID),
-               byLocation[parentLoc] != nil {
+                byLocation[parentLoc] != nil
+            {
                 childrenOf[parentLoc, default: []].append(device)
             } else {
                 topLevel.append(device)
@@ -215,7 +220,8 @@ public struct USBDeviceNode: Identifiable {
             return USBDeviceNode(device: device, depth: depth, children: kids)
         }
 
-        return topLevel
+        return
+            topLevel
             .sorted { $0.locationID < $1.locationID }
             .map { build($0, depth: 0) }
     }

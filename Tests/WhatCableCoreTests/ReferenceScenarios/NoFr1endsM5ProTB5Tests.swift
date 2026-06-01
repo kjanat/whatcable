@@ -1,4 +1,5 @@
 import Testing
+
 @testable import WhatCableCore
 
 /// Reference-scenario test anchored on the NoFr1ends M5 Pro + UGreen
@@ -116,7 +117,8 @@ struct NoFr1endsM5ProTB5Tests {
             Issue.record("expected .fine(80), got \(String(describing: diag?.bottleneck))")
             return
         }
-        #expect(active == 80,
+        #expect(
+            active == 80,
             "TB5 symmetric headline. 40 means per-lane leak, 120 means asymmetric leak.")
         #expect(diag!.cableSignalConflict == false)
         #expect(diag!.facts.cableGbps == 80)

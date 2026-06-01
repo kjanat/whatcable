@@ -1,0 +1,6 @@
+#ifndef WHATCABLE_CSQLITE_SHIM_H
+#define WHATCABLE_CSQLITE_SHIM_H
+
+#include <sqlite3.h>
+
+#endif /* WHATCABLE_CSQLITE_SHIM_H */

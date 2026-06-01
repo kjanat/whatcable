@@ -140,13 +140,15 @@ public struct PortPowerSample: Codable, Sendable, Equatable {
         accumulatorErrorCount = try c.decodeIfPresent(Int.self, forKey: .accumulatorErrorCount) ?? 0
         vconnAccumulatedPower = try c.decodeIfPresent(Int.self, forKey: .vconnAccumulatedPower) ?? 0
         vconnAccumulatorCount = try c.decodeIfPresent(Int.self, forKey: .vconnAccumulatorCount) ?? 0
-        vconnAccumulatorErrorCount = try c.decodeIfPresent(Int.self, forKey: .vconnAccumulatorErrorCount) ?? 0
+        vconnAccumulatorErrorCount =
+            try c.decodeIfPresent(Int.self, forKey: .vconnAccumulatorErrorCount) ?? 0
         numLDCMCollisions = try c.decodeIfPresent(Int.self, forKey: .numLDCMCollisions) ?? 0
         usbSleepPoolPowerMW = try c.decodeIfPresent(Int.self, forKey: .usbSleepPoolPowerMW) ?? 0
         usbWakePoolPowerMW = try c.decodeIfPresent(Int.self, forKey: .usbWakePoolPowerMW) ?? 0
         powerState = try c.decodeIfPresent(Int.self, forKey: .powerState) ?? 0
         portType = try c.decodeIfPresent(Int.self, forKey: .portType) ?? 0
-        isContractedFallback = try c.decodeIfPresent(Bool.self, forKey: .isContractedFallback) ?? false
+        isContractedFallback =
+            try c.decodeIfPresent(Bool.self, forKey: .isContractedFallback) ?? false
     }
 }
 
